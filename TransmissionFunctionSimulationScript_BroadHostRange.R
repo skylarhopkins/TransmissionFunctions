@@ -2,15 +2,11 @@
 #We added a wider density range to address a reviewer's comment
 ##5 July 2018
 
-getwd()
 library(deSolve) 
-
-#test write.csv on NCEAS Aurora
-write.csv(compareests, paste("/home/hopkins/TransmissionFunctions/testcsv",".csv",sep=""), row.names=F)
 
 #################################################################################
 ###########################Global Variables#####################################
-nrestarts = 1 ##number of fits of each model to each dataset with different starting parameters
+nrestarts = 5 ##number of fits of each model to each dataset with different starting parameters
 ndatasets = 100 ##number of sample datasets for each K
 FOI<-0.0005 #0.001, 0.0005, 0.0001
 gamma<-0.05 #0.02, 0.05, 0.1
