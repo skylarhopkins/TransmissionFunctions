@@ -273,12 +273,13 @@ nllFD.fn <- function(pars,                # log(B) & log(gamma) in a vector, mus
 ###############################################################################
 #######################Optimization Procedures###################################
 ###############################################################################
-#5 July - 10:56pm
-factors<-expand.grid(fittingattempt=seq(1, nrestarts,1), dataset=seq(1, ndatasets, 1), K=ks)
-L<-length(factors$K)
-compareests<-cbind(factors, data.frame(initbetaNL=rep(NA,L), initgammaNL=rep(NA,L), initKNL=rep(NA,L), initbetaDD=rep(NA,L), initgammaDD=rep(NA,L), initbetaFD=rep(NA,L), initgammaFD=rep(NA,L),betaNL=rep(NA,L),gammaNL=rep(NA,L), KNL=rep(NA,L), betaDD=rep(NA,L), gammaDD=rep(NA,L), betaFD=rep(NA,L), gammaFD=rep(NA,L), lik=rep(NA,L), conv=rep(NA,L), likDD=rep(NA,L), convDD=rep(NA,L), likFD=rep(NA,L), convFD=rep(NA,L), NLLtrue=rep(NA, L), truebeta=rep(NA, L)))
 
+start_time <- Sys.time()
 for (k in 1:length(ks)) {
+  ##set up dataframe for output - one per K value
+  factors<-expand.grid(fittingattempt=seq(1, nrestarts,1), dataset=seq(1, ndatasets, 1), K=ks[k])
+  L<-length(factors$K)
+  compareests<-cbind(factors, data.frame(initbetaNL=rep(NA,L), initgammaNL=rep(NA,L), initKNL=rep(NA,L), initbetaDD=rep(NA,L), initgammaDD=rep(NA,L), initbetaFD=rep(NA,L), initgammaFD=rep(NA,L),betaNL=rep(NA,L),gammaNL=rep(NA,L), KNL=rep(NA,L), betaDD=rep(NA,L), gammaDD=rep(NA,L), betaFD=rep(NA,L), gammaFD=rep(NA,L), lik=rep(NA,L), conv=rep(NA,L), likDD=rep(NA,L), convDD=rep(NA,L), likFD=rep(NA,L), convFD=rep(NA,L), NLLtrue=rep(NA, L), truebeta=rep(NA, L)))
   for (j in 1:ndatasets) {
     truebeta<-(FOI*N0)/((N0^ks[k])*1)
     ts.sir <- data.frame(ode(
@@ -360,23 +361,21 @@ for (k in 1:length(ks)) {
       outDD<-optim(startpar2, nllDD.fn, control = list(trace = 0, maxit = 1000), method= "Nelder-Mead")
       outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
       ##save output
-      compareests[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j), c(4,5,6)]<-startpar
-      compareests[(compareests$K==ks[k] &compareests$fittingattempt==i & compareests$dataset==j), c(7,8)]<-startpar2
-      compareests[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j), c(9,10)]<-startpar3
-      compareests[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j), c(11,12,13)]<-exp(as.numeric(outNL$par))
-      compareests[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j), c(14,15)]<-exp(as.numeric(outDD$par))
-      compareests[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j), c(16,17)]<-exp(as.numeric(outFD$par))
-      compareests$lik[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)]<-outNL$value  #negative log likelihood value
-      compareests$conv[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)]<-outNL$convergence  #if not 0, didn't converge
-      compareests$likDD[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)]<-outDD$value  #negative log likelihood value
-      compareests$convDD[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)]<-outDD$convergence  #if not 0, didn't converge
-      compareests$likFD[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)]<-outFD$value  #negative log likelihood value
-      compareests$convFD[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)]<-outFD$convergence  #if not 0, didn't converge
-      compareests$NLLtrue[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)]<-sum(nll.true1, nll.true2, nll.true3, nll.true4, nll.true5, nll.true6)
-      compareests$truebeta[(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)]<-truebeta
+      AssignmentRows<-which(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)
+      compareests[AssignmentRows, c(4:10)]<-c(startpar, startpar2, startpar3) 
+      compareests[AssignmentRows, c(11:17)]<-exp(c(as.numeric(outNL$par), as.numeric(outDD$par), as.numeric(outFD$par)))
+      compareests$lik[AssignmentRows]<-outNL$value  #negative log likelihood value
+      compareests$conv[AssignmentRows]<-outNL$convergence  #if not 0, didn't converge
+      compareests$likDD[AssignmentRows]<-outDD$value  #negative log likelihood value
+      compareests$convDD[AssignmentRows]<-outDD$convergence  #if not 0, didn't converge
+      compareests$likFD[AssignmentRows]<-outFD$value  #negative log likelihood value
+      compareests$convFD[AssignmentRows]<-outFD$convergence  #if not 0, didn't converge
+      compareests$NLLtrue[AssignmentRows]<-sum(nll.true1, nll.true2, nll.true3, nll.true4, nll.true5, nll.true6)
+      compareests$truebeta[AssignmentRows]<-truebeta
     }
   }
+  #output one dataframe per K value to a CSV to save
+  write.csv(compareests, paste("/Users/hopkins/Documents/Transmission Function Literature Review/TransmissionFunctions/compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=F)
 }
-
-write.csv(compareests, paste("/home/hopkins/TransmissionFunctions//compareests","FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=F)
-View(compareests)
+end_time <- Sys.time()
+end_time - start_time 
