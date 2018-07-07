@@ -14,11 +14,11 @@ ks<-seq(0, 1, 0.1)
 #Epidemics will be generated in 6 populations with densities that are constant in time 
 #(ie no demography) and then combined to create a dataset where density varies in space
 N0<-100
-N02<-200
-N03<-400
-N04<-800
-N05<-1600
-N06<-3200
+N02<-250
+N03<-500
+N04<-1000
+N05<-1500
+N06<-2000
 
 #initial population sizes with somewhat variable prevalences (all =<1%)
 initial.SI1 <- c(S = (N0-1), I = 1)
@@ -27,7 +27,7 @@ initial.SI3 <- c(S = (N03-1), I = 1)
 initial.SI4 <- c(S = (N04-1), I = 1)
 initial.SI5 <- c(S = (N05-1), I = 1)
 initial.SI6 <- c(S = (N06-1), I = 1)
-time.out <- seq(0,150,by = .1) ##for simulating data from ODEs 
+time.out <- seq(0,150,by = 1) ##for simulating data from ODEs - output same with 0.1 step
 time.samp <- seq(0,133, by = 7) ##will sample 20 time points
 samp.sizes <- rep(100, length(time.samp)) ##sample 100 indiv each time
 
@@ -273,7 +273,6 @@ nllFD.fn <- function(pars,                # log(B) & log(gamma) in a vector, mus
 ###############################################################################
 #######################Optimization Procedures###################################
 ###############################################################################
-
 start_time <- Sys.time()
 for (k in 1:length(ks)) {
   ##set up dataframe for output - one per K value
@@ -343,7 +342,7 @@ for (k in 1:length(ks)) {
     num.inf.samp6 <- rbinom(length(time.samp), size = samp.sizes, prob = prev.samp6)
     nll.true6 <- - sum(dbinom(num.inf.samp6, samp.sizes, prev.samp6, log = TRUE))
     for (i in 1:nrestarts) {
-      print(c("NEW PARAMS", "K=", k, "Run #", j, "Restart #", i))
+      print(c("NEW PARAMS", "K=", ks[k], "Dataset #", j, "Restart #", i))
       ##Random starts
       beta1<-log(rlnorm(1, mean=log(truebeta), sdlog=1))
       gamma1<-log(rlnorm(1, mean=log(gamma), sdlog=1))
@@ -376,6 +375,14 @@ for (k in 1:length(ks)) {
   }
   #output one dataframe per K value to a CSV to save
   write.csv(compareests, paste("/Users/hopkins/Documents/Transmission Function Literature Review/TransmissionFunctions/compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=F)
+  #gc()
 }
 end_time <- Sys.time()
 end_time - start_time 
+
+plot(compareests$betaNL~compareests$gammaNL, ylim=c((0), (0.05)), xlim=c((gamma-0.1), (gamma+0.2)))
+points(compareests$betaDD~compareests$gammaDD, col="orange")
+points(compareests$betaFD~compareests$gammaFD, col="green")
+abline(v=gamma); abline(h=truebeta)
+
+View(compareests)
