@@ -11,22 +11,24 @@ ndatasets = 100 ##number of sample datasets for each K
 FOI<-0.0005 #0.001, 0.0005, 0.0001
 gamma<-0.05 #0.02, 0.05, 0.1
 ks<-seq(0, 1, 0.1) 
+
 #Epidemics will be generated in 6 populations with densities that are constant in time 
 #(ie no demography) and then combined to create a dataset where density varies in space
 N0<-100
-N02<-250
+N02<-200
 N03<-500
 N04<-1000
 N05<-1500
 N06<-2000
 
-#initial population sizes with somewhat variable prevalences (all =<1%)
+#initial population sizes - introduce X-X infected individuals to each population
+#such that each population starts with 1% infection prevalence
 initial.SI1 <- c(S = (N0-1), I = 1)
-initial.SI2 <- c(S = (N02-1), I = 1)
-initial.SI3 <- c(S = (N03-1), I = 1)
-initial.SI4 <- c(S = (N04-1), I = 1)
-initial.SI5 <- c(S = (N05-1), I = 1)
-initial.SI6 <- c(S = (N06-1), I = 1)
+initial.SI2 <- c(S = (N02-2), I = 2)
+initial.SI3 <- c(S = (N03-5), I = 5)
+initial.SI4 <- c(S = (N04-10), I = 10)
+initial.SI5 <- c(S = (N05-15), I = 15)
+initial.SI6 <- c(S = (N06-20), I = 20)
 time.out <- seq(0,150,by = 1) ##for simulating data from ODEs - output same with 0.1 step
 time.samp <- seq(0,133, by = 7) ##will sample 20 time points
 samp.sizes <- rep(100, length(time.samp)) ##sample 100 indiv each time
@@ -379,10 +381,3 @@ for (k in 1:length(ks)) {
 }
 end_time <- Sys.time()
 end_time - start_time 
-
-plot(compareests$betaNL~compareests$gammaNL, ylim=c((0), (0.05)), xlim=c((gamma-0.1), (gamma+0.2)))
-points(compareests$betaDD~compareests$gammaDD, col="orange")
-points(compareests$betaFD~compareests$gammaFD, col="green")
-abline(v=gamma); abline(h=truebeta)
-
-View(compareests)
