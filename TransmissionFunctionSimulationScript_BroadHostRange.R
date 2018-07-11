@@ -11,7 +11,7 @@ nrestarts = 5 ##number of fits of each model to each dataset with different star
 ndatasets = 100 ##number of sample datasets for each K
 FOI<-0.001 #0.001, 0.0005, 0.0001
 gamma<-0.05 #0.02, 0.05, 0.1
-ks<-seq(0, 1, 0.1) 
+ks<-seq(0.8, 1, 0.1) 
 
 #Epidemics will be generated in 6 populations with densities that are constant in time 
 #(ie no demography) and then combined to create a dataset where density varies in space
@@ -359,9 +359,21 @@ for (k in 1:length(ks)) {
       startpar2<-c(beta=beta2, gamma=gamma2)
       startpar3<-c(beta=beta3, gamma=gamma3)
       ##optimization procedures
-      outNL<-optim(startpar, nll.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
-      outDD<-optim(startpar2, nllDD.fn, control = list(trace = 0, maxit = 1000), method= "Nelder-Mead")
-      outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
+      tryNL <- try(outNL<-optim(startpar, nll.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead"))
+      if (class(tryNL) == "try-error") {
+        startpar = c(beta = log(rlnorm(1, mean=log(truebeta), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)), K= log(rlnorm(1, mean=log(0.1), sdlog=1)))
+        outNL<-optim(startpar, nll.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
+        }
+      tryDD<-try(outDD<-optim(startpar2, nllDD.fn, control = list(trace = 0, maxit = 1000), method= "Nelder-Mead"))
+      if (class(tryDD) == "try-error") {
+        startpar2 = c(beta = log(rlnorm(1, mean=log((FOI*N0)/(N0^1)), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)))
+        outDD<-optim(startpar2, nllDD.fn, control = list(trace = 0, maxit = 1000), method= "Nelder-Mead")
+        }
+      tryFD<-try(outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead"))
+      if (class(tryFD) == "try-error") {
+        startpar3 = c(beta = log(rlnorm(1, mean=log(gamma), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)))
+        outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
+        }
       ##save output
       AssignmentRows<-which(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)
       compareests[AssignmentRows, c(4:10)]<-c(startpar, startpar2, startpar3) 
