@@ -2,36 +2,36 @@
 #We added a wider density range to address a reviewer's comment
 ##5 July 2018
 
-library(deSolve) 
 getwd()
+library(deSolve) 
+
+#test write.csv on NCEAS Aurora
+write.csv(compareests, paste("/home/hopkins/TransmissionFunctions/testcsv",".csv",sep=""), row.names=F)
 
 #################################################################################
 ###########################Global Variables#####################################
-nrestarts = 5 ##number of fits of each model to each dataset with different starting parameters
+nrestarts = 1 ##number of fits of each model to each dataset with different starting parameters
 ndatasets = 100 ##number of sample datasets for each K
-FOI<-0.0001 #0.001, 0.0005, 0.0001
-gamma<-0.02 #0.02, 0.05, 0.1
-ks<-seq(0.0, 1.0, 0.1) 
-
+FOI<-0.0005 #0.001, 0.0005, 0.0001
+gamma<-0.05 #0.02, 0.05, 0.1
+ks<-seq(0, 1, 0.1) 
 #Epidemics will be generated in 6 populations with densities that are constant in time 
 #(ie no demography) and then combined to create a dataset where density varies in space
 N0<-100
 N02<-200
-N03<-500
-N04<-1000
-N05<-1500
-N06<-2000
-Nref<-1000
+N03<-400
+N04<-800
+N05<-1600
+N06<-3200
 
-#initial population sizes - introduce X-X infected individuals to each population
-#such that each population starts with 1% infection prevalence
+#initial population sizes with somewhat variable prevalences (all =<1%)
 initial.SI1 <- c(S = (N0-1), I = 1)
-initial.SI2 <- c(S = (N02-2), I = 2)
-initial.SI3 <- c(S = (N03-5), I = 5)
-initial.SI4 <- c(S = (N04-10), I = 10)
-initial.SI5 <- c(S = (N05-15), I = 15)
-initial.SI6 <- c(S = (N06-20), I = 20)
-time.out <- seq(0,150,by = 1) ##for simulating data from ODEs - output same with 0.1 step
+initial.SI2 <- c(S = (N02-1), I = 1)
+initial.SI3 <- c(S = (N03-1), I = 1)
+initial.SI4 <- c(S = (N04-1), I = 1)
+initial.SI5 <- c(S = (N05-1), I = 1)
+initial.SI6 <- c(S = (N06-1), I = 1)
+time.out <- seq(0,150,by = 0.5) ##for simulating data from ODEs 
 time.samp <- seq(0,133, by = 7) ##will sample 20 time points
 samp.sizes <- rep(100, length(time.samp)) ##sample 100 indiv each time
 
@@ -284,7 +284,7 @@ for (k in 1:length(ks)) {
   L<-length(factors$K)
   compareests<-cbind(factors, data.frame(initbetaNL=rep(NA,L), initgammaNL=rep(NA,L), initKNL=rep(NA,L), initbetaDD=rep(NA,L), initgammaDD=rep(NA,L), initbetaFD=rep(NA,L), initgammaFD=rep(NA,L),betaNL=rep(NA,L),gammaNL=rep(NA,L), KNL=rep(NA,L), betaDD=rep(NA,L), gammaDD=rep(NA,L), betaFD=rep(NA,L), gammaFD=rep(NA,L), lik=rep(NA,L), conv=rep(NA,L), likDD=rep(NA,L), convDD=rep(NA,L), likFD=rep(NA,L), convFD=rep(NA,L), NLLtrue=rep(NA, L), truebeta=rep(NA, L)))
   for (j in 1:ndatasets) {
-    truebeta<-(FOI*Nref)/((Nref^ks[k])*10)
+    truebeta<-(FOI*N0)/((N0^ks[k])*1)
     ts.sir <- data.frame(ode(
       y = initial.SI1,               # Initial conditions for population
       times = time.out,             # Timepoints for evaluation
@@ -346,35 +346,23 @@ for (k in 1:length(ks)) {
     num.inf.samp6 <- rbinom(length(time.samp), size = samp.sizes, prob = prev.samp6)
     nll.true6 <- - sum(dbinom(num.inf.samp6, samp.sizes, prev.samp6, log = TRUE))
     for (i in 1:nrestarts) {
-      print(c("NEW PARAMS", "K=", ks[k], "Dataset #", j, "Restart #", i))
+      print(c("NEW PARAMS", "K=", k, "Run #", j, "Restart #", i))
       ##Random starts
       beta1<-log(rlnorm(1, mean=log(truebeta), sdlog=1))
       gamma1<-log(rlnorm(1, mean=log(gamma), sdlog=1))
       K1<-log(rlnorm(1, mean=log(0.1), sdlog=1));
-      beta2<-log(rlnorm(1, mean=log((FOI*Nref)/(Nref^1)*10), sdlog=1))
+      beta2<-log(rlnorm(1, mean=log((FOI*N0)/(N0^1)), sdlog=1))
       #beta2<-log(rlnorm(1, mean=log(truebeta), sdlog=1))
       gamma2<-log(rlnorm(1, mean=log(gamma), sdlog=1));
-      beta3<-log(rlnorm(1, mean=log((FOI*Nref)/(Nref^0)*10), sdlog=1))
+      beta3<-log(rlnorm(1, mean=log((FOI*N0)/(N0^0)), sdlog=1))
       gamma3<-log(rlnorm(1, mean=log(gamma), sdlog=1));
       startpar<-c(beta=beta1, gamma=gamma1, K=K1)
       startpar2<-c(beta=beta2, gamma=gamma2)
       startpar3<-c(beta=beta3, gamma=gamma3)
       ##optimization procedures
-      tryNL <- try(outNL<-optim(startpar, nll.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead"))
-      if (class(tryNL) == "try-error") {
-        startpar = c(beta = log(rlnorm(1, mean=log(truebeta), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)), K= log(rlnorm(1, mean=log(0.1), sdlog=1)))
-        outNL<-optim(startpar, nll.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
-        }
-      tryDD<-try(outDD<-optim(startpar2, nllDD.fn, control = list(trace = 0, maxit = 1000), method= "Nelder-Mead"))
-      if (class(tryDD) == "try-error") {
-        startpar2 = c(beta = log(rlnorm(1, mean=log((FOI*N0)/(N0^1)), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)))
-        outDD<-optim(startpar2, nllDD.fn, control = list(trace = 0, maxit = 1000), method= "Nelder-Mead")
-        }
-      tryFD<-try(outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead"))
-      if (class(tryFD) == "try-error") {
-        startpar3 = c(beta = log(rlnorm(1, mean=log(gamma), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)))
-        outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
-        }
+      outNL<-optim(startpar, nll.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
+      outDD<-optim(startpar2, nllDD.fn, control = list(trace = 0, maxit = 1000), method= "Nelder-Mead")
+      outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
       ##save output
       AssignmentRows<-which(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)
       compareests[AssignmentRows, c(4:10)]<-c(startpar, startpar2, startpar3) 
@@ -390,8 +378,7 @@ for (k in 1:length(ks)) {
     }
   }
   #output one dataframe per K value to a CSV to save
-  #write.csv(compareests, paste("/Users/hopkins/Documents/Transmission Function Literature Review/TransmissionFunctions/compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=F)
-  write.csv(compareests, paste("/home/hopkins/TransmissionFunctions/N1000compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=F)
+  write.csv(compareests, paste("/Users/hopkins/Documents/Transmission Function Literature Review/TransmissionFunctions/compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=F)
   #gc()
 }
 end_time <- Sys.time()
