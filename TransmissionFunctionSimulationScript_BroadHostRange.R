@@ -21,7 +21,7 @@ N03<-500
 N04<-1000
 N05<-1500
 N06<-2000
-Nref<-1000
+Nref<-N04
 
 #initial population sizes - introduce X-X infected individuals to each population
 #such that each population starts with 1% infection prevalence
@@ -284,7 +284,7 @@ for (k in 1:length(ks)) {
   L<-length(factors$K)
   compareests<-cbind(factors, data.frame(initbetaNL=rep(NA,L), initgammaNL=rep(NA,L), initKNL=rep(NA,L), initbetaDD=rep(NA,L), initgammaDD=rep(NA,L), initbetaFD=rep(NA,L), initgammaFD=rep(NA,L),betaNL=rep(NA,L),gammaNL=rep(NA,L), KNL=rep(NA,L), betaDD=rep(NA,L), gammaDD=rep(NA,L), betaFD=rep(NA,L), gammaFD=rep(NA,L), lik=rep(NA,L), conv=rep(NA,L), likDD=rep(NA,L), convDD=rep(NA,L), likFD=rep(NA,L), convFD=rep(NA,L), NLLtrue=rep(NA, L), truebeta=rep(NA, L)))
   for (j in 1:ndatasets) {
-    truebeta<-(FOI*Nref)/((Nref^ks[k])*10)
+    truebeta<-FOI*(Nref/10)/(Nref^ks[k])
     ts.sir <- data.frame(ode(
       y = initial.SI1,               # Initial conditions for population
       times = time.out,             # Timepoints for evaluation
