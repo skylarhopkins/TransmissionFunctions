@@ -7,11 +7,11 @@ getwd()
 
 #################################################################################
 ###########################Global Variables#####################################
-nrestarts = 5 ##number of fits of each model to each dataset with different starting parameters
+nrestarts = 7 ##number of fits of each model to each dataset with different starting parameters
 ndatasets = 100 ##number of sample datasets for each K
-FOI<-0.0001 #0.0001, 0.0005, 0.001
+FOI<-0.0005 #0.0001, 0.0005, 0.001
 gamma<-0.02 #0.02, 0.05, 0.1
-ks<-seq(0.0, 1.0, 0.1) 
+ks<-seq(0, 1.0, 0.1) 
 
 #Epidemics will be generated in 6 populations with densities that are constant in time 
 #(ie no demography) and then combined to create a dataset where density varies in space
@@ -372,7 +372,7 @@ for (k in 1:length(ks)) {
       }
       tryFD<-try(outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead"))
       if (class(tryFD) == "try-error") {
-        startpar3 = c(beta = log(rlnorm(1, mean=log(gamma), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)))
+        startpar3 = c(beta = log(rlnorm(1, mean=log((FOI*Nref)/(Nref^0)*10), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)))
         outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
       }
       ##save output
@@ -398,3 +398,4 @@ end_time <- Sys.time()
 end_time - start_time 
 
 View(compareests)
+warnings()
