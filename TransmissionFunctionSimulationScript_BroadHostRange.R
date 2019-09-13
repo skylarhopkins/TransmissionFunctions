@@ -10,7 +10,7 @@ getwd()
 nrestarts = 7 ##number of fits of each model to each dataset with different starting parameters
 ndatasets = 100 ##number of sample datasets for each K
 FOI<-0.0005 #0.0001, 0.0005, 0.001
-gamma<-0.02 #0.02, 0.05, 0.1
+gamma<-0.05 #0.02, 0.05, 0.1
 ks<-seq(0, 1.0, 0.1) 
 
 #Epidemics will be generated in 6 populations with densities that are constant in time 
