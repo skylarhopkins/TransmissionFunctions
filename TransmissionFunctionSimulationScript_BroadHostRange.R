@@ -1,4 +1,4 @@
-##5 restarts, 100 datasets, k=0-1, N=100, 200, 400, 800, 1600, 3200
+##7 restarts, 100 datasets, k=0-1, N=100, 200, 400, 800, 1600, 3200
 #We added a wider density range to address a reviewer's comment
 ##5 July 2018
 
@@ -9,8 +9,8 @@ getwd()
 ###########################Global Variables#####################################
 nrestarts = 7 ##number of fits of each model to each dataset with different starting parameters
 ndatasets = 100 ##number of sample datasets for each K
-FOI<-0.0005 #0.0001, 0.0005, 0.001
-gamma<-0.05 #0.02, 0.05, 0.1
+FOI<-0.001 #0.0001, 0.0005, 0.001
+gamma<-0.1 #0.02, 0.05, 0.1
 ks<-seq(0, 1.0, 0.1) 
 
 #Epidemics will be generated in 6 populations with densities that are constant in time 
@@ -354,8 +354,9 @@ for (k in 1:length(ks)) {
       beta2<-log(rlnorm(1, mean=log((FOI*Nref)/(Nref^1)*10), sdlog=1))
       #beta2<-log(rlnorm(1, mean=log(truebeta), sdlog=1))
       gamma2<-log(rlnorm(1, mean=log(gamma), sdlog=1));
-      beta3<-log(rlnorm(1, mean=log((FOI*Nref)/(Nref^0)*10), sdlog=1))
-      gamma3<-log(rlnorm(1, mean=log(gamma), sdlog=1)); #WAS USED BEFORE
+      #beta3<-log(rlnorm(1, mean=log((FOI*Nref)/(Nref^0)*10), sdlog=1)) #WAS USED BEFORE
+      beta3<-runif(1, -2, 0)
+      gamma3<-log(rlnorm(1, mean=log(gamma), sdlog=1))
       startpar<-c(beta=beta1, gamma=gamma1, K=K1)
       startpar2<-c(beta=beta2, gamma=gamma2)
       startpar3<-c(beta=beta3, gamma=gamma3)
@@ -372,7 +373,7 @@ for (k in 1:length(ks)) {
       }
       tryFD<-try(outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead"))
       if (class(tryFD) == "try-error") {
-        startpar3 = c(beta = log(rlnorm(1, mean=log((FOI*Nref)/(Nref^0)*10), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)))
+        startpar3 = c(beta = runif(1, -2, 0), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)))
         outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
       }
       ##save output
@@ -390,8 +391,8 @@ for (k in 1:length(ks)) {
     }
   }
   #output one dataframe per K value to a CSV to save
-  #write.csv(compareests, paste("/Users/hopkins/Documents/Transmission Function Literature Review/TransmissionFunctions/compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=F)
-  write.csv(compareests, paste("/home/hopkins/TransmissionFunctions/Simulation csv output/N1000compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=F)
+  #write.csv(compareests, paste("/Users/hopkins/Documents/Transmission Function Literature Review/TransmissionFunctions/compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=FALSE)
+  write.csv(compareests, paste("/home/hopkins/TransmissionFunctions/Simulation csv output/N1000compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=FALSE)
   #gc()
 }
 end_time <- Sys.time()
