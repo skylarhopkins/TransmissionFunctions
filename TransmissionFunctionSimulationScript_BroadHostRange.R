@@ -1,42 +1,14 @@
-##7 restarts, 100 datasets, k=0-1, N=100, 200, 400, 800, 1600, 3200
-#We added a wider density range to address a reviewer's comment
-##5 July 2018
+#This script defines all the functions in the contactr package, a tool to simulate epidemics
+#in populations with different sizes (and thus densities, assuming constant area) using SIR 
+#epidemiological models with variable amounts of density-dependence in the transmission function, ranging from
+#the density-dependent (DD) transmission function (K=1) to the frequency-dependent (FD) transmission function (K=0).
+#After simulating, the package fits three models to the simulated datasets to compare the accuracy of their
+#parameter estimates: the DD function, the FD function, and a flexible nonlinear function. 
 
 library(deSolve) 
-getwd()
 
 #################################################################################
-###########################Global Variables#####################################
-nrestarts = 7 ##number of fits of each model to each dataset with different starting parameters
-ndatasets = 100 ##number of sample datasets for each K
-FOI<-0.001 #0.0001, 0.0005, 0.001
-gamma<-0.1 #0.02, 0.05, 0.1
-ks<-seq(0, 1.0, 0.1) 
-
-#Epidemics will be generated in 6 populations with densities that are constant in time 
-#(ie no demography) and then combined to create a dataset where density varies in space
-N0<-100
-N02<-200
-N03<-500
-N04<-1000
-N05<-1500
-N06<-2000
-Nref<-N04
-
-#initial population sizes - introduce 1-20 infected individuals to each population
-#such that each population starts with 1% infection prevalence
-initial.SI1 <- c(S = (N0-1), I = 1)
-initial.SI2 <- c(S = (N02-2), I = 2)
-initial.SI3 <- c(S = (N03-5), I = 5)
-initial.SI4 <- c(S = (N04-10), I = 10)
-initial.SI5 <- c(S = (N05-15), I = 15)
-initial.SI6 <- c(S = (N06-20), I = 20)
-time.out <- seq(0,150,by = 1) ##for simulating data from ODEs - output same with 0.1 step
-time.samp <- seq(0,133, by = 7) ##will sample 20 time points
-samp.sizes <- rep(100, length(time.samp)) ##sample 100 indiv each time
-
-#################################################################################
-##########################System of Diffeqs#####################################
+####################System of Diffeqs Function#####################################
 #################################################################################
 sir <- function(t,y,parms){
   with(c(as.list(y),parms),{
@@ -47,356 +19,223 @@ sir <- function(t,y,parms){
   })
 }
 
+################################################################################
+##########NL Neg Log Likelihood and optimization functions#######################
 #################################################################################
-#############NONLINEAR Neg Log Likelihood Function################################
-#################################################################################
-nll.fn <- function(pars,                # log(B) & log(gamma) in a vector, must be named
-                   data1 = num.inf.samp1,             # number positive in sample
-                   data2 = num.inf.samp2,
-                   data3 = num.inf.samp3,
-                   data4 = num.inf.samp4,
-                   data5 = num.inf.samp5,
-                   data6 = num.inf.samp6,
-                   n = samp.sizes,                        # sample sizes
-                   pop.size1 = N0,
-                   pop.size2 = N02,
-                   pop.size3 = N03,
-                   pop.size4 = N04,
-                   pop.size5 = N05,
-                   pop.size6 = N06,
-                   times = time.samp) # the times they were observed at
+nll.NL.fn <- function(pars,                # log(B) & log(gamma) in a vector, must be named
+                      datasets=data, 
+                      initial.inf=initial.I,
+                      initial.sus=initial.S,
+                      n = samp.sizes, # sample sizes
+                      popsizes = pops,
+                      time.outs = time.out,
+                      time.samps = time.samp) # the times they were observed at
 {
-  pars <- c(exp(pars[1]), exp(pars[2]), exp(pars[3])) ##exponentiate parameters
-  
-  ##Epidemic 1
-  ts.sir.temp1 <- data.frame(ode(y = initial.SI1, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size1)))
-  ts.sir.temp1$P <- ts.sir.temp1$I / pop.size1
-  prev.samp.temp1 <- ts.sir.temp1$P[ts.sir.temp1$time %in% times]
-  prev.samp.temp1[prev.samp.temp1<0.0001]<-0.0001
-  prev.samp.temp1[prev.samp.temp1>0.9999]<-0.9999
-  
-  ##Epidemic 2
-  ts.sir.temp2 <- data.frame(ode(y = initial.SI2, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size2)))
-  ts.sir.temp2$P <- ts.sir.temp2$I / pop.size2
-  prev.samp.temp2 <- ts.sir.temp2$P[ts.sir.temp2$time %in% times]
-  prev.samp.temp2[prev.samp.temp2<0.0001]<-0.0001
-  prev.samp.temp2[prev.samp.temp2>0.9999]<-0.9999
-  
-  ##Epidemic 3
-  ts.sir.temp3 <- data.frame(ode(y = initial.SI3, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size3)))
-  ts.sir.temp3$P <- ts.sir.temp3$I / pop.size3
-  prev.samp.temp3 <- ts.sir.temp3$P[ts.sir.temp3$time %in% times]
-  prev.samp.temp3[prev.samp.temp3<0.0001]<-0.0001
-  prev.samp.temp3[prev.samp.temp3>0.9999]<-0.9999
-  
-  ##Epidemic 4
-  ts.sir.temp4 <- data.frame(ode(y = initial.SI4, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size4)))
-  ts.sir.temp4$P <- ts.sir.temp4$I / pop.size4
-  prev.samp.temp4 <- ts.sir.temp4$P[ts.sir.temp4$time %in% times]
-  prev.samp.temp4[prev.samp.temp4<0.0001]<-0.0001
-  prev.samp.temp4[prev.samp.temp4>0.9999]<-0.9999
-  
-  ##Epidemic 5
-  ts.sir.temp5 <- data.frame(ode(y = initial.SI5, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size5)))
-  ts.sir.temp5$P <- ts.sir.temp5$I / pop.size5
-  prev.samp.temp5 <- ts.sir.temp5$P[ts.sir.temp5$time %in% times]
-  prev.samp.temp5[prev.samp.temp5<0.0001]<-0.0001
-  prev.samp.temp5[prev.samp.temp5>0.9999]<-0.9999
-  
-  ##Epidemic 6
-  ts.sir.temp6 <- data.frame(ode(y = initial.SI6, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size6)))
-  ts.sir.temp6$P <- ts.sir.temp6$I / pop.size6
-  prev.samp.temp6 <- ts.sir.temp6$P[ts.sir.temp6$time %in% times]
-  prev.samp.temp6[prev.samp.temp6<0.0001]<-0.0001
-  prev.samp.temp6[prev.samp.temp6>0.9999]<-0.9999
-  
-  nll<-sum((-sum(dbinom(data1, n, prev.samp.temp1, log = TRUE))) +
-             (-sum(dbinom(data2, n, prev.samp.temp2, log = TRUE))) +
-             (-sum(dbinom(data3, n, prev.samp.temp3, log = TRUE))) +
-             (-sum(dbinom(data4, n, prev.samp.temp4, log = TRUE))) +
-             (-sum(dbinom(data5, n, prev.samp.temp5, log = TRUE))) +
-             (-sum(dbinom(data6, n, prev.samp.temp6, log = TRUE)))
-  )
+  pars <- c(exp(pars[1]), exp(pars[2]), exp(pars[3]))
+  nlls<-rep(NA, length(popsizes))
+  for(i in 1:length(popsizes)) { #need to define pops as the list of pop sizes
+    #Create epidemic time series from the parameters
+    ts.sir.temp <- data.frame(ode(y = c(S=initial.sus[i], I=initial.inf[i]), times = time.outs, #need to define initial.S and initial.I as list of initial sizes
+                                  func = sir, parms = c(pars, N=popsizes[i])))
+    ts.sir.temp$P <- ts.sir.temp$I / popsizes[i]
+    #Pull out the prevalences at the random time points
+    prev.samp.temp <- ts.sir.temp$P[ts.sir.temp$time %in% time.samps]
+    prev.samp.temp <- pmin(pmax(prev.samp.temp, 0.0001), 0.9999)
+    #calculate the negative log likelihood for these params in this population
+    nlls[i]<- -sum(dbinom(datasets[,i], n, prev.samp.temp, log = TRUE)) #we need to save data in database instead of several lists
+  }
+  nll<-sum(nlls)
   nll
+}
+
+NL.optim <- function(beta=truebeta, gamma=truegamma)
+{
+  startpar = c(beta = log(rlnorm(1, mean=log(beta), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)), K=runif(1, -2.3, -0.1))
+  outNL<-optim(startpar, nll.NL.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
+  #print(outNL)
 }
 
 ##############################################################################
-##########################DD NLL Function######################################
+##########DD Neg Log Likelihood and optimization functions#######################
 ###############################################################################
-nllDD.fn <- function(pars,                # log(B) & log(gamma) in a vector, must be named
-                     data1 = num.inf.samp1,             # number positive in sample
-                     data2 = num.inf.samp2,
-                     data3 = num.inf.samp3,
-                     data4 = num.inf.samp4,
-                     data5 = num.inf.samp5,
-                     data6 = num.inf.samp6,
-                     n = samp.sizes,                        # sample sizes
-                     pop.size1 = N0,
-                     pop.size2 = N02,
-                     pop.size3 = N03,
-                     pop.size4 = N04,
-                     pop.size5 = N05,
-                     pop.size6 = N06,
-                     times = time.samp) # the times they were observed at
+nll.DD.fn <- function(pars,                # log(B) & log(gamma) in a vector, must be named
+                      datasets=data,
+                      initial.inf=initial.I,
+                      initial.sus=initial.S,
+                      n = samp.sizes, # sample sizes
+                      popsizes = pops,
+                      time.outs = time.out,
+                      time.samps = time.samp) # the times they were observed at
 {
-  pars <- c(exp(pars[1]), exp(pars[2]), K=1) ##this is the only difference from the NL function (K=1)
-  ##Epidemic 1
-  ts.sir.temp1 <- data.frame(ode(y = initial.SI1, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size1)))
-  ts.sir.temp1$P <- ts.sir.temp1$I / pop.size1
-  prev.samp.temp1 <- ts.sir.temp1$P[ts.sir.temp1$time %in% times]
-  prev.samp.temp1[prev.samp.temp1<0.0001]<-0.0001
-  prev.samp.temp1[prev.samp.temp1>0.9999]<-0.9999
-  ##Epidemic 2
-  ts.sir.temp2 <- data.frame(ode(y = initial.SI2, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size2)))
-  ts.sir.temp2$P <- ts.sir.temp2$I / pop.size2
-  prev.samp.temp2 <- ts.sir.temp2$P[ts.sir.temp2$time %in% times]
-  prev.samp.temp2[prev.samp.temp2<0.0001]<-0.0001
-  prev.samp.temp2[prev.samp.temp2>0.9999]<-0.9999
-  ##Epidemic 3
-  ts.sir.temp3 <- data.frame(ode(y = initial.SI3, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size3)))
-  ts.sir.temp3$P <- ts.sir.temp3$I / pop.size3
-  prev.samp.temp3 <- ts.sir.temp3$P[ts.sir.temp3$time %in% times]
-  prev.samp.temp3[prev.samp.temp3<0.0001]<-0.0001
-  prev.samp.temp3[prev.samp.temp3>0.9999]<-0.9999
-  ##Epidemic 4
-  ts.sir.temp4 <- data.frame(ode(y = initial.SI4, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size4)))
-  ts.sir.temp4$P <- ts.sir.temp4$I / pop.size4
-  prev.samp.temp4 <- ts.sir.temp4$P[ts.sir.temp4$time %in% times]
-  prev.samp.temp4[prev.samp.temp4<0.0001]<-0.0001
-  prev.samp.temp4[prev.samp.temp4>0.9999]<-0.9999
-  ##Epidemic 5
-  ts.sir.temp5 <- data.frame(ode(y = initial.SI5, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size5)))
-  ts.sir.temp5$P <- ts.sir.temp5$I / pop.size5
-  prev.samp.temp5 <- ts.sir.temp5$P[ts.sir.temp5$time %in% times]
-  prev.samp.temp5[prev.samp.temp5<0.0001]<-0.0001
-  prev.samp.temp5[prev.samp.temp5>0.9999]<-0.9999
-  ##Epidemic 6
-  ts.sir.temp6 <- data.frame(ode(y = initial.SI6, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size6)))
-  ts.sir.temp6$P <- ts.sir.temp6$I / pop.size6
-  prev.samp.temp6 <- ts.sir.temp6$P[ts.sir.temp6$time %in% times]
-  prev.samp.temp6[prev.samp.temp6<0.0001]<-0.0001
-  prev.samp.temp6[prev.samp.temp6>0.9999]<-0.9999
-  
-  nll<-sum((-sum(dbinom(data1, n, prev.samp.temp1, log = TRUE))) +
-             (-sum(dbinom(data2, n, prev.samp.temp2, log = TRUE))) +
-             (-sum(dbinom(data3, n, prev.samp.temp3, log = TRUE))) +
-             (-sum(dbinom(data4, n, prev.samp.temp4, log = TRUE))) +
-             (-sum(dbinom(data5, n, prev.samp.temp5, log = TRUE))) +
-             (-sum(dbinom(data6, n, prev.samp.temp6, log = TRUE)))
-  )
-  
-  nll
-}
-
-#######################################################################
-##########################FD FIT################################
-#######################################################################
-nllFD.fn <- function(pars,                # log(B) & log(gamma) in a vector, must be named
-                     data1 = num.inf.samp1,             # number positive in sample
-                     data2 = num.inf.samp2,
-                     data3 = num.inf.samp3,
-                     data4 = num.inf.samp4,
-                     data5 = num.inf.samp5,
-                     data6 = num.inf.samp6,
-                     n = samp.sizes,                        # sample sizes
-                     pop.size1 = N0,
-                     pop.size2 = N02,
-                     pop.size3 = N03,
-                     pop.size4 = N04,
-                     pop.size5 = N05,
-                     pop.size6 = N06,
-                     times = time.samp) # the times they were observed at
-{
-  pars <- c(exp(pars[1]), exp(pars[2]), K=0) ##this is the only difference from the NL function (K=0)
-  ##Epidemic 1
-  ts.sir.temp1 <- data.frame(ode(y = initial.SI1, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size1)))
-  ts.sir.temp1$P <- ts.sir.temp1$I / pop.size1
-  prev.samp.temp1 <- ts.sir.temp1$P[ts.sir.temp1$time %in% times]
-  prev.samp.temp1[prev.samp.temp1<0.0001]<-0.0001
-  prev.samp.temp1[prev.samp.temp1>0.9999]<-0.9999
-  ##Epidemic 2
-  ts.sir.temp2 <- data.frame(ode(y = initial.SI2, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size2)))
-  ts.sir.temp2$P <- ts.sir.temp2$I / pop.size2
-  prev.samp.temp2 <- ts.sir.temp2$P[ts.sir.temp2$time %in% times]
-  prev.samp.temp2[prev.samp.temp2<0.0001]<-0.0001
-  prev.samp.temp2[prev.samp.temp2>0.9999]<-0.9999
-  ##Epidemic 3
-  ts.sir.temp3 <- data.frame(ode(y = initial.SI3, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size3)))
-  ts.sir.temp3$P <- ts.sir.temp3$I / pop.size3
-  prev.samp.temp3 <- ts.sir.temp3$P[ts.sir.temp3$time %in% times]
-  prev.samp.temp3[prev.samp.temp3<0.0001]<-0.0001
-  prev.samp.temp3[prev.samp.temp3>0.9999]<-0.9999
-  ##Epidemic 4
-  ts.sir.temp4 <- data.frame(ode(y = initial.SI4, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size4)))
-  ts.sir.temp4$P <- ts.sir.temp4$I / pop.size4
-  prev.samp.temp4 <- ts.sir.temp4$P[ts.sir.temp4$time %in% times]
-  prev.samp.temp4[prev.samp.temp4<0.0001]<-0.0001
-  prev.samp.temp4[prev.samp.temp4>0.9999]<-0.9999
-  ##Epidemic 5
-  ts.sir.temp5 <- data.frame(ode(y = initial.SI5, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size5)))
-  ts.sir.temp5$P <- ts.sir.temp5$I / pop.size5
-  prev.samp.temp5 <- ts.sir.temp5$P[ts.sir.temp5$time %in% times]
-  prev.samp.temp5[prev.samp.temp5<0.0001]<-0.0001
-  prev.samp.temp5[prev.samp.temp5>0.9999]<-0.9999
-  ##Epidemic 6
-  ts.sir.temp6 <- data.frame(ode(y = initial.SI6, times = time.out,
-                                 func = sir, parms = c(pars, N=pop.size6)))
-  ts.sir.temp6$P <- ts.sir.temp6$I / pop.size6
-  prev.samp.temp6 <- ts.sir.temp6$P[ts.sir.temp6$time %in% times]
-  prev.samp.temp6[prev.samp.temp6<0.0001]<-0.0001
-  prev.samp.temp6[prev.samp.temp6>0.9999]<-0.9999
-  
-  nll<-sum((-sum(dbinom(data1, n, prev.samp.temp1, log = TRUE))) +
-             (-sum(dbinom(data2, n, prev.samp.temp2, log = TRUE))) +
-             (-sum(dbinom(data3, n, prev.samp.temp3, log = TRUE))) +
-             (-sum(dbinom(data4, n, prev.samp.temp4, log = TRUE))) +
-             (-sum(dbinom(data5, n, prev.samp.temp5, log = TRUE))) +
-             (-sum(dbinom(data6, n, prev.samp.temp6, log = TRUE)))
-  )
-  
-  nll
-}
-
-###############################################################################
-#######################Optimization Procedures###################################
-###############################################################################
-start_time <- Sys.time()
-for (k in 1:length(ks)) {
-  ##set up dataframe for output - one per K value
-  factors<-expand.grid(fittingattempt=seq(1, nrestarts,1), dataset=seq(1, ndatasets, 1), K=ks[k])
-  L<-length(factors$K)
-  compareests<-cbind(factors, data.frame(initbetaNL=rep(NA,L), initgammaNL=rep(NA,L), initKNL=rep(NA,L), initbetaDD=rep(NA,L), initgammaDD=rep(NA,L), initbetaFD=rep(NA,L), initgammaFD=rep(NA,L),betaNL=rep(NA,L),gammaNL=rep(NA,L), KNL=rep(NA,L), betaDD=rep(NA,L), gammaDD=rep(NA,L), betaFD=rep(NA,L), gammaFD=rep(NA,L), lik=rep(NA,L), conv=rep(NA,L), likDD=rep(NA,L), convDD=rep(NA,L), likFD=rep(NA,L), convFD=rep(NA,L), NLLtrue=rep(NA, L), truebeta=rep(NA, L)))
-  for (j in 1:ndatasets) {
-    truebeta<-FOI*(Nref)/(Nref^ks[k])
-    ts.sir <- data.frame(ode(
-      y = initial.SI1,               # Initial conditions for population
-      times = time.out,             # Timepoints for evaluation
-      func = sir,                   # Function to evaluate
-      parms = c(beta=truebeta, gamma=gamma, N=N0, K=ks[k]),
-      method="lsoda"))               # Vector of parameters
-    ts.sir$P <- ts.sir$I / N0
-    prev.samp1 <- ts.sir$P[ts.sir$time %in% time.samp]
-    num.inf.samp1 <- rbinom(length(time.samp), size = samp.sizes, prob = prev.samp1)
-    nll.true1 <- - sum(dbinom(num.inf.samp1, samp.sizes, prev.samp1, log = TRUE))
-    ts.sir2 <- data.frame(ode(
-      y = initial.SI2,               # Initial conditions for population
-      times = time.out,             # Timepoints for evaluation
-      func = sir,                   # Function to evaluate
-      parms = c(beta=truebeta, gamma=gamma, N=N02, K=ks[k]),
-      method="lsoda")) 
-    ts.sir2$P <- ts.sir2$I / N02
-    prev.samp2 <- ts.sir2$P[ts.sir2$time %in% time.samp]
-    num.inf.samp2 <- rbinom(length(time.samp), size = samp.sizes, prob = prev.samp2)
-    nll.true2 <- - sum(dbinom(num.inf.samp2, samp.sizes, prev.samp2, log = TRUE))
-    ts.sir3 <- data.frame(ode(
-      y = initial.SI3,               # Initial conditions for population
-      times = time.out,             # Timepoints for evaluation
-      func = sir,                   # Function to evaluate
-      parms = c(beta=truebeta, gamma=gamma, N=N03, K=ks[k]),
-      method="lsoda"))
-    ts.sir3$P <- ts.sir3$I / N03  
-    prev.samp3 <- ts.sir3$P[ts.sir3$time %in% time.samp]
-    num.inf.samp3 <- rbinom(length(time.samp), size = samp.sizes, prob = prev.samp3)
-    nll.true3 <- - sum(dbinom(num.inf.samp3, samp.sizes, prev.samp3, log = TRUE))
-    ts.sir4 <- data.frame(ode(
-      y = initial.SI4,               # Initial conditions for population
-      times = time.out,             # Timepoints for evaluation
-      func = sir,                   # Function to evaluate
-      parms = c(beta=truebeta, gamma=gamma, N=N04, K=ks[k]),
-      method="lsoda"))
-    ts.sir4$P <- ts.sir4$I / N04  
-    prev.samp4 <- ts.sir4$P[ts.sir4$time %in% time.samp]
-    num.inf.samp4 <- rbinom(length(time.samp), size = samp.sizes, prob = prev.samp4)
-    nll.true4 <- - sum(dbinom(num.inf.samp4, samp.sizes, prev.samp4, log = TRUE))
-    ts.sir5 <- data.frame(ode(
-      y = initial.SI5,               # Initial conditions for population
-      times = time.out,             # Timepoints for evaluation
-      func = sir,                   # Function to evaluate
-      parms = c(beta=truebeta, gamma=gamma, N=N05, K=ks[k]),
-      method="lsoda"))
-    ts.sir5$P <- ts.sir5$I / N05  
-    prev.samp5 <- ts.sir5$P[ts.sir5$time %in% time.samp]
-    num.inf.samp5 <- rbinom(length(time.samp), size = samp.sizes, prob = prev.samp5)
-    nll.true5 <- - sum(dbinom(num.inf.samp5, samp.sizes, prev.samp5, log = TRUE))
-    ts.sir6 <- data.frame(ode(
-      y = initial.SI6,               # Initial conditions for population
-      times = time.out,             # Timepoints for evaluation
-      func = sir,                   # Function to evaluate
-      parms = c(beta=truebeta, gamma=gamma, N=N06, K=ks[k]),
-      method="lsoda"))
-    ts.sir6$P <- ts.sir6$I / N06  
-    prev.samp6 <- ts.sir6$P[ts.sir6$time %in% time.samp]
-    num.inf.samp6 <- rbinom(length(time.samp), size = samp.sizes, prob = prev.samp6)
-    nll.true6 <- - sum(dbinom(num.inf.samp6, samp.sizes, prev.samp6, log = TRUE))
-    for (i in 1:nrestarts) {
-      print(c("NEW PARAMS", "K=", ks[k], "Dataset #", j, "Restart #", i))
-      ##Random starts
-      beta1<-log(rlnorm(1, mean=log(truebeta), sdlog=1))
-      gamma1<-log(rlnorm(1, mean=log(gamma), sdlog=1))
-      K1<-log(rlnorm(1, mean=log(0.1), sdlog=1));
-      beta2<-log(rlnorm(1, mean=log((FOI*Nref)/(Nref^1)*10), sdlog=1))
-      #beta2<-log(rlnorm(1, mean=log(truebeta), sdlog=1))
-      gamma2<-log(rlnorm(1, mean=log(gamma), sdlog=1));
-      #beta3<-log(rlnorm(1, mean=log((FOI*Nref)/(Nref^0)*10), sdlog=1)) #WAS USED BEFORE
-      beta3<-runif(1, -2, 0)
-      gamma3<-log(rlnorm(1, mean=log(gamma), sdlog=1))
-      startpar<-c(beta=beta1, gamma=gamma1, K=K1)
-      startpar2<-c(beta=beta2, gamma=gamma2)
-      startpar3<-c(beta=beta3, gamma=gamma3)
-      ##optimization procedures
-      tryNL <- try(outNL<-optim(startpar, nll.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead"))
-      if (class(tryNL) == "try-error") {
-        startpar = c(beta = log(rlnorm(1, mean=log(truebeta), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)), K= log(rlnorm(1, mean=log(0.1), sdlog=1)))
-        outNL<-optim(startpar, nll.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
-      }
-      tryDD<-try(outDD<-optim(startpar2, nllDD.fn, control = list(trace = 0, maxit = 1000), method= "Nelder-Mead"))
-      if (class(tryDD) == "try-error") {
-        startpar2 = c(beta = log(rlnorm(1, mean=log((FOI*N0)/(N0^1)), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)))
-        outDD<-optim(startpar2, nllDD.fn, control = list(trace = 0, maxit = 1000), method= "Nelder-Mead")
-      }
-      tryFD<-try(outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead"))
-      if (class(tryFD) == "try-error") {
-        startpar3 = c(beta = runif(1, -2, 0), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)))
-        outFD<-optim(startpar3, nllFD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
-      }
-      ##save output
-      AssignmentRows<-which(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)
-      compareests[AssignmentRows, c(4:10)]<-c(startpar, startpar2, startpar3) 
-      compareests[AssignmentRows, c(11:17)]<-exp(c(as.numeric(outNL$par), as.numeric(outDD$par), as.numeric(outFD$par)))
-      compareests$lik[AssignmentRows]<-outNL$value  #negative log likelihood value
-      compareests$conv[AssignmentRows]<-outNL$convergence  #if not 0, didn't converge
-      compareests$likDD[AssignmentRows]<-outDD$value  #negative log likelihood value
-      compareests$convDD[AssignmentRows]<-outDD$convergence  #if not 0, didn't converge
-      compareests$likFD[AssignmentRows]<-outFD$value  #negative log likelihood value
-      compareests$convFD[AssignmentRows]<-outFD$convergence  #if not 0, didn't converge
-      compareests$NLLtrue[AssignmentRows]<-sum(nll.true1, nll.true2, nll.true3, nll.true4, nll.true5, nll.true6)
-      compareests$truebeta[AssignmentRows]<-truebeta
-    }
+  pars <- c(exp(pars[1]), exp(pars[2]), K=1) #K=1 for DD
+  nlls<-rep(NA, length(popsizes))
+  for(i in 1:length(popsizes)) { #need to define pops as the list of pop sizes
+    #Create epidemic time series from the parameters
+    ts.sir.temp <- data.frame(ode(y = c(S=initial.sus[i], I=initial.inf[i]), times = time.outs, #need to define initial.S and initial.I as list of initial sizes
+                                  func = sir, parms = c(pars, N=popsizes[i])))
+    ts.sir.temp$P <- ts.sir.temp$I / popsizes[i]
+    #Pull out the prevalences at the random time points
+    prev.samp.temp <- ts.sir.temp$P[ts.sir.temp$time %in% time.samps]
+    prev.samp.temp <- pmin(pmax(prev.samp.temp, 0.0001), 0.9999)
+    #calculate the negative log likelihood for these params in this population
+    nlls[i]<- -sum(dbinom(datasets[,i], n, prev.samp.temp, log = TRUE)) #we need to save data in database instead of several lists
   }
-  #output one dataframe per K value to a CSV to save
-  #write.csv(compareests, paste("/Users/hopkins/Documents/Transmission Function Literature Review/TransmissionFunctions/compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=FALSE)
-  write.csv(compareests, paste("/home/hopkins/TransmissionFunctions/Simulation csv output/N1000compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=FALSE)
-  #gc()
+  nll<-sum(nlls)
+  nll
 }
+
+DD.optim <- function(FoI=FOI, N=Nref, gamma=truegamma)
+{
+  startpar= c(beta = log(rlnorm(1, mean=log((FOI*Nref)/(Nref^1)), sdlog=1)), gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)))
+  outDD<-optim(startpar, nll.DD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
+  #print(outNL)
+}
+
+#################################################################################
+##########FD Neg Log Likelihood and optimization functions#######################
+################################################################################
+nll.FD.fn <- function(pars,                # log(B) & log(gamma) in a vector, must be named
+                      datasets=data,
+                      initial.inf=initial.I,
+                      initial.sus=initial.S,
+                      n = samp.sizes, # sample sizes
+                      popsizes = pops,
+                      time.outs = time.out,
+                      time.samps = time.samp) # the times they were observed at
+{
+  pars <- c(exp(pars[1]), exp(pars[2]), K=0) #K=0 for FD
+  nlls<-rep(NA, length(popsizes))
+  for(i in 1:length(popsizes)) { 
+    #Create epidemic time series from the parameters
+    ts.sir.temp <- data.frame(ode(y = c(S=initial.sus[i], I=initial.inf[i]), times = time.outs, 
+                                  func = sir, parms = c(pars, N=popsizes[i])))
+    ts.sir.temp$P <- ts.sir.temp$I / popsizes[i]
+    #Pull out the prevalences at the random time points
+    prev.samp.temp <- ts.sir.temp$P[ts.sir.temp$time %in% time.samps]
+    prev.samp.temp <- pmin(pmax(prev.samp.temp, 0.0001), 0.9999)
+    #calculate the negative log likelihood for these params in this population
+    nlls[i]<- -sum(dbinom(datasets[,i], n, prev.samp.temp, log = TRUE)) 
+  }
+  nll<-sum(nlls)
+  nll
+}
+
+FD.optim <- function(randombeta=runif(1, -2, 0), gamma=truegamma)
+{
+  startpar= c(beta = randombeta, gamma = log(rlnorm(1, mean=log(gamma), sdlog=1)))
+  outDD<-optim(startpar, nll.FD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
+  #print(outNL)
+}
+
+###############################################################################
+###############Simulation and Optimization Function############################
+###############################################################################
+
+outputlocation.="~/Documents/Transmission Function Literature Review"
+sim.and.opt<-function(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks=ks., initial.I=initial.I., initial.S=initial.S., time.out.=time.out, time.samp.=time.samp, samp.sizes.=samp.sizes, nrestarts.=nrestarts, ndatasets.=ndatasets, outputlocation.=outputlocation) {
+  for (k in 1:length(ks)) {
+    ##set up dataframe for output of the fitting process - one per K value
+    factors<-expand.grid(fittingattempt=seq(1, nrestarts,1), dataset=seq(1, ndatasets, 1), K=ks[k])
+    L<-length(factors$K)
+    compareests<-cbind(factors, data.frame(initbetaNL=rep(NA,L), initgammaNL=rep(NA,L), initKNL=rep(NA,L), initbetaDD=rep(NA,L), initgammaDD=rep(NA,L), initbetaFD=rep(NA,L), initgammaFD=rep(NA,L),betaNL=rep(NA,L),gammaNL=rep(NA,L), KNL=rep(NA,L), betaDD=rep(NA,L), gammaDD=rep(NA,L), betaFD=rep(NA,L), gammaFD=rep(NA,L), lik=rep(NA,L), conv=rep(NA,L), likDD=rep(NA,L), convDD=rep(NA,L), likFD=rep(NA,L), convFD=rep(NA,L), truebeta=rep(NA, L)))
+    #create each simulated dataset and try to fit to it nrestart times
+    for (j in 1:ndatasets) {
+      truebeta<-FOI*(Nref)/(Nref^ks[k]) #use known FOI to define truebeta for simulation and random parameter picking
+      #loop to get each sample dataset as a column in a dataframe
+      data<-data.frame(matrix(vector(), nrow=length(time.samp), ncol=length(pops))) #empty dataframe for data
+      for(e in 1:length(pops)) {
+        ts.sir <- data.frame(ode(
+          y = c(S=initial.S[e], I=initial.I[e]),               # Initial conditions for population
+          times = time.out,             # Timepoints for evaluation
+          func = sir,                   # Function to evaluate
+          parms = c(beta=truebeta, gamma=truegamma, N=pops[e], K=ks[k]),
+          method="lsoda"))               # Vector of parameters
+        ts.sir$P <- ts.sir$I / pops[e]
+        prev.samp <- ts.sir$P[ts.sir$time %in% time.samp]
+        data[,e] <- rbinom(length(time.samp), size = samp.sizes, prob = prev.samp)
+      }
+      for (i in 1:nrestarts) {
+        print(c("NEW PARAMS", "K=", ks[k], "Dataset #", j, "Restart #", i)) #print to see loop progress
+        ##optimization procedures - set random restarts and re-try once if they immediately produce errors
+        tryNL <- try(outNL<-NL.optim(beta = truebeta, gamma=truebeta))
+        if (class(tryNL) == "try-error") {
+          outNL<-NL.optim(beta = truebeta, gamma=truebeta)
+        }
+        tryDD <- try(outDD<-DD.optim(FoI = FOI, N=Nref, gamma=truebeta))
+        if (class(tryDD) == "try-error") {
+          outDD<-DD.optim(FoI = FOI, N=Nref, gamma=truebeta)    
+        }
+        tryFD <- try(outFD<-FD.optim(randombeta=runif(1, -2, 0), gamma=truegamma))
+        if (class(tryFD) == "try-error") {
+          outFD<-FD.optim(randombeta=runif(1, -2, 0), gamma=truegamma)    
+        }
+        ##save output
+        AssignmentRows<-which(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)
+        compareests[AssignmentRows, c(4:10)]<-c(startpar, startpar2, startpar3) 
+        compareests[AssignmentRows, c(11:17)]<-exp(c(as.numeric(outNL$par), as.numeric(outDD$par), as.numeric(outFD$par)))
+        compareests$lik[AssignmentRows]<-outNL$value  #negative log likelihood value
+        compareests$conv[AssignmentRows]<-outNL$convergence  #if not 0, didn't converge
+        compareests$likDD[AssignmentRows]<-outDD$value  #negative log likelihood value
+        compareests$convDD[AssignmentRows]<-outDD$convergence  #if not 0, didn't converge
+        compareests$likFD[AssignmentRows]<-outFD$value  #negative log likelihood value
+        compareests$convFD[AssignmentRows]<-outFD$convergence  #if not 0, didn't converge
+        compareests$truebeta[AssignmentRows]<-truebeta
+      }
+    }
+    #output one dataframe per K value to a CSV to save
+    write.csv(compareests, paste(outputlocation,"/compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=FALSE)
+  }
+}
+
+#################################################################################
+#########################Set Global Variables#####################################
+#################################################################################
+#If you assign these outside of the function arguments, you cannot use the same names as the
+#argument names, or else you'll get a recursive argument error. Sticking a period after each
+#name solves this problem
+
+#number of fits of each model to each dataset with different random starting parameters
+nrestarts. = 1
+#number of sample datasets for each value of K that you're simulating over
+ndatasets. = 1 
+#The values of K (unitless density-dependence parameter) that you're simulating over
+ks.<-seq(0.0, 1.0, 0.1) 
+#The Force of Infection value that you are simulating. If you want to do more than one at a time, you'll need to write a loop
+FOI.<-0.0001 
+#The gamma value that you are simulating. If you want to do more than one at a time, you'll need to write a loop
+truegamma.<-0.1
+#A list of constant population sizes in different populations that will experience simultaneous epidemics; you can
+#include as few/many populations as desired
+pops.<-c(100, 200, 500, 1000, 1500, 2000) 
+#To help with comparing across populations and picking relevant starting values for optimization, specify
+#a reference population size around the middle of your population sizes
+Nref.<-1000
+#Initial number of infected individuals in each population. To keep the initial prevalence roughly constant, you 
+#can scale these relative to the population sizes
+initial.I.<-c(1,2,5,10,15,20) 
+#Initial number of infected individuals in each population. S+I should equal N
+initial.S.<-pops-initial.I
+#When simulating data from ODEs, what time steps do you want simulation output for? EX: each day for 150 days
+time.out. <- seq(0,150,by = 1)
+#When do you want to sample each population during the epidemic? EX: One per week for 133 days
+time.samp. <- seq(0,133, by = 7)
+#How many individuals will you sample in each population during each sampling event? 
+#Must be the same number of individuals in each population each time, but it can change across sampling events
+samp.sizes. <- rep(100, length(time.samp)) 
+#Where should the CSV output file for each K be saved?
+outputlocation.<-getwd()
+
+#################################################################################
+########################Run the tool##############################################
+################################################################################
+#WARNING: this can take a very long time to run depending on ndatasets, nrestarts, and length of ks,
+#so you might want to estimate run times (end_time - start_time) on a smaller subset first
+
+start_time <- Sys.time()
+
+sim.and.opt()
+
 end_time <- Sys.time()
 end_time - start_time 
 
-View(compareests)
-warnings()
+#View(compareests) #just shows the last K in the loop, if you want to visually check output
