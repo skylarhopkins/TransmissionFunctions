@@ -132,7 +132,7 @@ FD.optim <- function(randombeta=runif(1, -2, 0), gamma=truegamma)
 ###############################################################################
 
 outputlocation.="~/Documents/Transmission Function Literature Review"
-sim.and.opt<-function(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks=ks., initial.I=initial.I., initial.S=initial.S., time.out.=time.out, time.samp.=time.samp, samp.sizes.=samp.sizes, nrestarts.=nrestarts, ndatasets.=ndatasets, outputlocation.=outputlocation) {
+sim.and.opt<-function(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks=ks., initial.I=initial.I., initial.S=initial.S., time.out=time.out., time.samp=time.samp., samp.sizes=samp.sizes., nrestarts=nrestarts., ndatasets=ndatasets., outputlocation=outputlocation.) {
   for (k in 1:length(ks)) {
     ##set up dataframe for output of the fitting process - one per K value
     factors<-expand.grid(fittingattempt=seq(1, nrestarts,1), dataset=seq(1, ndatasets, 1), K=ks[k])
