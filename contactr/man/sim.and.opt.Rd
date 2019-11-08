@@ -4,12 +4,8 @@
 \alias{sim.and.opt}
 \title{Simulate epidemics with different transmission functions and fit multiple transmission functions to the simulated data}
 \usage{
-sim.and.opt(FOI = FOI., truegamma = truegamma., pops = pops.,
-  Nref = Nref., ks = ks., initial.I = initial.I.,
-  initial.S = initial.S., time.out = time.out.,
-  time.samp = time.samp., samp.sizes = samp.sizes.,
-  nrestarts = nrestarts., ndatasets = ndatasets.,
-  outputlocation = outputlocation.)
+sim.and.opt(FOI, truegamma, pops, Nref, ks, initial.I, initial.S, time.out,
+  time.samp, samp.sizes, nrestarts, ndatasets, outputlocation)
 }
 \arguments{
 \item{FOI}{The Force of Infection value that you are simulating. If you want to do more than one at a time, you'll need to write a loop}
@@ -36,7 +32,7 @@ sim.and.opt(FOI = FOI., truegamma = truegamma., pops = pops.,
 
 \item{ndatasets}{number of sample datasets for each value of K that you're simulating over}
 
-\item{outlocation}{The root file directory where the output files should be stored}
+\item{outputlocation}{The root file directory where the output files should be stored}
 }
 \description{
 'sim.and.opt' simulates epidemics in populations with different sizes (and thus densities, assuming constant area) using SIR
@@ -53,29 +49,31 @@ will save one output CSV file containing the parameter estimates for each datase
 values of K.
 }
 \examples{
-#########################Set Global Variables#####################################
-##If you assign these variables outside of the function arguments, you cannot use the same names as the
-##argument names, or else you'll get a recursive argument error. Sticking a period after each
-##name solves this problem
+###Set Global Variables
+##If you assign these variables outside of the function arguments, you cannot use the
+##same names as the argument names, or else you'll get a recursive argument error.
+##Sticking a period after each name solves this problem
 #FOI.<-0.0001
 #truegamma.<-0.1
 #pops.<-c(100, 200, 500, 1000, 1500, 2000)
 #Nref.<-1000
 #ks.<-seq(0.0, 1.0, 0.1)
 #initial.I.<-c(1,2,5,10,15,20)
-#initial.S.<-pops-initial.I
+#initial.S.<-pops.-initial.I.
 #time.out. <- seq(0,150,by = 1)
 #time.samp. <- seq(0,133, by = 7)
-#samp.sizes. <- rep(100, length(time.samp))
+#samp.sizes. <- rep(100, length(time.samp.))
 #nrestarts. = 1
 #ndatasets. = 1
 #outputlocation.<-getwd()
-########################Run the tool#######################################
-##WARNING: this can take a very long time to run depending on ndatasets, nrestarts, and length of ks,
-##so you might want to estimate run times (end_time - start_time) on a smaller subset first
+###Run the tool
+##WARNING: this can take a very long time to run depending on ndatasets, nrestarts,
+##and length of ks,so you might want to estimate run times (end_time - start_time)
+##on a smaller subset first
 #start_time <- Sys.time()
-#sim.and.opt()
+#sim.and.opt(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks=ks., initial.I=initial.I.,
+#initial.S=initial.S., time.out=time.out., time.samp=time.samp., samp.sizes=samp.sizes.,
+#nrestarts=nrestarts., ndatasets=ndatasets., outputlocation=outputlocation.)
 #end_time <- Sys.time()
 #end_time - start_time
-#View(compareests) #just shows the last K in the loop, if you want to visually check output
 }

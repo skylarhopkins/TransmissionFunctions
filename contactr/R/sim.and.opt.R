@@ -24,48 +24,50 @@
 #'@param samp.sizes vector of how many individuals will you sample in each population during each sampling event; same length as time.samp
 #'@param nrestarts number of fits of each model to each dataset with different random starting parameters
 #'@param ndatasets number of sample datasets for each value of K that you're simulating over
-#'@param outlocation The root file directory where the output files should be stored
+#'@param outputlocation The root file directory where the output files should be stored
 #'
 #'@examples
-#'#########################Set Global Variables#####################################
-#'##If you assign these variables outside of the function arguments, you cannot use the same names as the
-#'##argument names, or else you'll get a recursive argument error. Sticking a period after each
-#'##name solves this problem
+#'###Set Global Variables
+#'##If you assign these variables outside of the function arguments, you cannot use the
+#'##same names as the argument names, or else you'll get a recursive argument error.
+#'##Sticking a period after each name solves this problem
 #'#FOI.<-0.0001
 #'#truegamma.<-0.1
 #'#pops.<-c(100, 200, 500, 1000, 1500, 2000)
 #'#Nref.<-1000
 #'#ks.<-seq(0.0, 1.0, 0.1)
 #'#initial.I.<-c(1,2,5,10,15,20)
-#'#initial.S.<-pops-initial.I
+#'#initial.S.<-pops.-initial.I.
 #'#time.out. <- seq(0,150,by = 1)
 #'#time.samp. <- seq(0,133, by = 7)
-#'#samp.sizes. <- rep(100, length(time.samp))
+#'#samp.sizes. <- rep(100, length(time.samp.))
 #'#nrestarts. = 1
 #'#ndatasets. = 1
 #'#outputlocation.<-getwd()
-#'########################Run the tool#######################################
-#'##WARNING: this can take a very long time to run depending on ndatasets, nrestarts, and length of ks,
-#'##so you might want to estimate run times (end_time - start_time) on a smaller subset first
+#'###Run the tool
+#'##WARNING: this can take a very long time to run depending on ndatasets, nrestarts,
+#'##and length of ks,so you might want to estimate run times (end_time - start_time)
+#'##on a smaller subset first
 #'#start_time <- Sys.time()
-#'#sim.and.opt()
+#'#sim.and.opt(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks=ks., initial.I=initial.I.,
+#'#initial.S=initial.S., time.out=time.out., time.samp=time.samp., samp.sizes=samp.sizes.,
+#'#nrestarts=nrestarts., ndatasets=ndatasets., outputlocation=outputlocation.)
 #'#end_time <- Sys.time()
 #'#end_time - start_time
-#'#View(compareests) #just shows the last K in the loop, if you want to visually check output
 
-sim.and.opt<-function(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks=ks., initial.I=initial.I., initial.S=initial.S., time.out=time.out., time.samp=time.samp., samp.sizes=samp.sizes., nrestarts=nrestarts., ndatasets=ndatasets., outputlocation=outputlocation.) {
+sim.and.opt<-function(FOI, truegamma, pops, Nref, ks, initial.I, initial.S, time.out, time.samp, samp.sizes, nrestarts, ndatasets, outputlocation) {
   for (k in 1:length(ks)) {
     ##set up dataframe for output of the fitting process - one per K value
     factors<-expand.grid(fittingattempt=seq(1, nrestarts,1), dataset=seq(1, ndatasets, 1), K=ks[k])
     L<-length(factors$K)
-    compareests<-cbind(factors, data.frame(initbetaNL=rep(NA,L), initgammaNL=rep(NA,L), initKNL=rep(NA,L), initbetaDD=rep(NA,L), initgammaDD=rep(NA,L), initbetaFD=rep(NA,L), initgammaFD=rep(NA,L),betaNL=rep(NA,L),gammaNL=rep(NA,L), KNL=rep(NA,L), betaDD=rep(NA,L), gammaDD=rep(NA,L), betaFD=rep(NA,L), gammaFD=rep(NA,L), lik=rep(NA,L), conv=rep(NA,L), likDD=rep(NA,L), convDD=rep(NA,L), likFD=rep(NA,L), convFD=rep(NA,L), truebeta=rep(NA, L)))
+    compareests<-cbind(factors, data.frame(betaNL=rep(NA,L),gammaNL=rep(NA,L), KNL=rep(NA,L), betaDD=rep(NA,L), gammaDD=rep(NA,L), betaFD=rep(NA,L), gammaFD=rep(NA,L), lik=rep(NA,L), conv=rep(NA,L), likDD=rep(NA,L), convDD=rep(NA,L), likFD=rep(NA,L), convFD=rep(NA,L), truebeta=rep(NA, L)))
     #create each simulated dataset and try to fit to it nrestart times
     for (j in 1:ndatasets) {
       truebeta<-FOI*(Nref)/(Nref^ks[k]) #use known FOI to define truebeta for simulation and random parameter picking
       #loop to get each sample dataset as a column in a dataframe
       data<-data.frame(matrix(vector(), nrow=length(time.samp), ncol=length(pops))) #empty dataframe for data
       for(e in 1:length(pops)) {
-        ts.sir <- data.frame(ode(
+        ts.sir <- data.frame(deSolve::ode(
           y = c(S=initial.S[e], I=initial.I[e]),               # Initial conditions for population
           times = time.out,             # Timepoints for evaluation
           func = sir,                   # Function to evaluate
@@ -73,27 +75,26 @@ sim.and.opt<-function(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks
           method="lsoda"))               # Vector of parameters
         ts.sir$P <- ts.sir$I / pops[e]
         prev.samp <- ts.sir$P[ts.sir$time %in% time.samp]
-        data[,e] <- rbinom(length(time.samp), size = samp.sizes, prob = prev.samp)
+        data[,e] <- stats::rbinom(length(time.samp), size = samp.sizes, prob = prev.samp)
       }
       for (i in 1:nrestarts) {
         print(c("NEW PARAMS", "K=", ks[k], "Dataset #", j, "Restart #", i)) #print to see loop progress
         ##optimization procedures - set random restarts and re-try once if they immediately produce errors
-        tryNL <- try(outNL<-NL.optim(beta = truebeta, gamma=truebeta))
+        tryNL <- try(outNL<-NL.optim(beta = truebeta, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp))
         if (class(tryNL) == "try-error") {
-          outNL<-NL.optim(beta = truebeta, gamma=truebeta)
+          outNL<-NL.optim(beta = truebeta, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp)
         }
-        tryDD <- try(outDD<-DD.optim(FoI = FOI, N=Nref, gamma=truebeta))
+        tryDD <- try(outDD<-DD.optim(FoI = FOI, N=Nref, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp))
         if (class(tryDD) == "try-error") {
-          outDD<-DD.optim(FoI = FOI, N=Nref, gamma=truebeta)
+          outDD<-DD.optim(FoI = FOI, N=Nref, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp)
         }
-        tryFD <- try(outFD<-FD.optim(randombeta=runif(1, -2, 0), gamma=truegamma))
+        tryFD <- try(outFD<-FD.optim(gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp))
         if (class(tryFD) == "try-error") {
-          outFD<-FD.optim(randombeta=runif(1, -2, 0), gamma=truegamma)
+          outFD<-FD.optim(gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp)
         }
         ##save output
         AssignmentRows<-which(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)
-        compareests[AssignmentRows, c(4:10)]<-c(startpar, startpar2, startpar3)
-        compareests[AssignmentRows, c(11:17)]<-exp(c(as.numeric(outNL$par), as.numeric(outDD$par), as.numeric(outFD$par)))
+        compareests[AssignmentRows, c(4:10)]<-exp(c(as.numeric(outNL$par), as.numeric(outDD$par), as.numeric(outFD$par)))
         compareests$lik[AssignmentRows]<-outNL$value  #negative log likelihood value
         compareests$conv[AssignmentRows]<-outNL$convergence  #if not 0, didn't converge
         compareests$likDD[AssignmentRows]<-outDD$value  #negative log likelihood value
@@ -104,6 +105,6 @@ sim.and.opt<-function(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks
       }
     }
     #output one dataframe per K value to a CSV to save
-    write.csv(compareests, paste(outputlocation,"/compareests","K",ks[k],"FOI",FOI,"gamma",gamma,".csv",sep=""), row.names=FALSE)
+    utils::write.csv(compareests, paste(outputlocation,"/compareests","K",ks[k],"FOI",FOI,"gamma",truegamma,".csv",sep=""), row.names=FALSE)
   }
 }
