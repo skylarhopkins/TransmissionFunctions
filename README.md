@@ -1,4 +1,7 @@
 # Transmission functions in epidemiological models - when do they create parameter estimate biases?
+
+[![DOI](https://zenodo.org/badge/139916893.svg)](https://zenodo.org/badge/latestdoi/139916893)
+
 This repo contains a model simulation tool that can illustrate bias in parameter estimates when linear transmission functions are used to approximate nonlinear transmission dynamics or when the linear, density-dependent transmission function is used with truly frequency-dependent transmission and vice versa. This simulation tool was created for an analysis in a manuscript in revision at Methods in Ecology and Evolution, and I later turned it into a package so that more flexible simulations could be run by people interested in evaluating bias in their own epidemiological models.
 
 The older, primary script file, TransmissionFunctionSimulationScript_BroadHostRange.R, generates epidemics in six popululations with six different host densities, assuming that the underlying transmission-density relationship is frequency-dependent (K=0), density-dependent (K=1), or nonlinear (0<K<1). The script then fits the three models (FD, DD, NL) to all generated data and records the resulting parameter estimates (Beta, gamma, K) and model fits (AICs). These estimates can be compared to the true values to calculate bias. All relevant functions are defined inside this script file.
