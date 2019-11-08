@@ -12,10 +12,9 @@ library("devtools")
 devtools::install_github("skylarhopkins/TransmissionFunctions", subdir="contactr") #does it work? I hope so.
 library("contactr")
 
-## 
-# If you assign these outside of the function arguments, you cannot use the same names as the
-# argument names, or else you'll get a recursive argument error. Sticking a period after each
-# name solves this problem
+### If you assign these outside of the function arguments, you cannot use the same names as the
+### argument names, or else you'll get a recursive argument error. Sticking a period after each
+### name solves this problem
 
 #number of fits of each model to each dataset with different random starting parameters
 nrestarts. = 7
@@ -49,8 +48,8 @@ samp.sizes. <- rep(100, length(time.samp.))
 outputlocation.<-getwd()
 
 ## ######################Run the tool##############################################
-# WARNING: this can take a very long time to run depending on ndatasets, nrestarts, and length of ks,
-# so you might want to estimate run times (end_time - start_time) on a smaller subset first
+### WARNING: this can take a very long time to run depending on ndatasets, nrestarts, and length of ks,
+### so you might want to estimate run times (end_time - start_time) on a smaller subset first
 
 start_time <- Sys.time()
 
