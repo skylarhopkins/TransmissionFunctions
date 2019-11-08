@@ -83,5 +83,4 @@ start_time <- Sys.time()
 
 sim.and.opt(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks=ks., initial.I=initial.I., initial.S=initial.S., time.out=time.out., time.samp=time.samp., samp.sizes=samp.sizes., nrestarts=nrestarts., ndatasets=ndatasets., outputlocation=outputlocation.)
 
-end_time <- Sys.time()
-end_time - start_time
+end_time <- Sys.time(); end_time - start_time
