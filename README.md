@@ -5,28 +5,24 @@ The older, primary script file, TransmissionFunctionSimulationScript_BroadHostRa
 
 The subdirectory, contactr, contains a package with five functions that accomplish the same goal as TransmissionFunctionSimulationScript_BroadHostRange.R, but allow for more flexibility in choosing population sizes. The sim.and.opt() function is the wrapper that runs everything. Below is an example of the work flow, which is also included in the documentation for sim.and.opt():
 
-#################################################################################
-#########################Load the package#####################################
-#################################################################################
+## Load the package
 install.packages("devtools")
 library("devtools")
 
 devtools::install_github("skylarhopkins/TransmissionFunctions", subdir="contactr") #does it work? I hope so.
 library("contactr")
 
-#################################################################################
-#########################Set Global Variables#####################################
-#################################################################################
-#If you assign these outside of the function arguments, you cannot use the same names as the
-#argument names, or else you'll get a recursive argument error. Sticking a period after each
-#name solves this problem
+## 
+# If you assign these outside of the function arguments, you cannot use the same names as the
+# argument names, or else you'll get a recursive argument error. Sticking a period after each
+# name solves this problem
 
 #number of fits of each model to each dataset with different random starting parameters
-nrestarts. = 14
+nrestarts. = 7
 #number of sample datasets for each value of K that you're simulating over
 ndatasets. = 100
 #The values of K (unitless density-dependence parameter) that you're simulating over
-ks.<-1.0
+ks.<-seq(0.0, 1.0, 0.1)
 #The Force of Infection value that you are simulating. If you want to do more than one at a time, you'll need to write a loop
 FOI.<-0.001
 #The gamma value that you are simulating. If you want to do more than one at a time, you'll need to write a loop
@@ -52,11 +48,9 @@ samp.sizes. <- rep(100, length(time.samp.))
 #Where should the CSV output file for each K be saved?
 outputlocation.<-getwd()
 
-#################################################################################
-########################Run the tool##############################################
-################################################################################
-#WARNING: this can take a very long time to run depending on ndatasets, nrestarts, and length of ks,
-#so you might want to estimate run times (end_time - start_time) on a smaller subset first
+## ######################Run the tool##############################################
+# WARNING: this can take a very long time to run depending on ndatasets, nrestarts, and length of ks,
+# so you might want to estimate run times (end_time - start_time) on a smaller subset first
 
 start_time <- Sys.time()
 
