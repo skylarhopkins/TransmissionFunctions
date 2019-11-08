@@ -19,34 +19,60 @@ argument names, or else you'll get a recursive argument error. Sticking a period
 name solves this problem
 
 #number of fits of each model to each dataset with different random starting parameters
+
 nrestarts. = 7
+
 #number of sample datasets for each value of K that you're simulating over
+
 ndatasets. = 100
+
 #The values of K (unitless density-dependence parameter) that you're simulating over
+
 ks.<-seq(0.0, 1.0, 0.1)
+
 #The Force of Infection value that you are simulating. If you want to do more than one at a time, you'll need to write a loop
+
 FOI.<-0.001
+
 #The gamma value that you are simulating. If you want to do more than one at a time, you'll need to write a loop
+
 truegamma.<-0.1
+
 #A list of constant population sizes in different populations that will experience simultaneous epidemics; you can
-#include as few/many populations as desired
+include as few/many populations as desired
+
 pops.<-c(100, 200, 500, 1000, 1500, 2000)
+
 #To help with comparing across populations and picking relevant starting values for optimization, specify
-#a reference population size around the middle of your population sizes
+a reference population size around the middle of your population sizes
+
 Nref.<-1000
+
 #Initial number of infected individuals in each population. To keep the initial prevalence roughly constant, you
-#can scale these relative to the population sizes
+can scale these relative to the population sizes
+
 initial.I.<-c(1,2,5,10,15,20)
+
 #Initial number of infected individuals in each population. S+I should equal N
+
 initial.S.<-pops.-initial.I.
+
 #When simulating data from ODEs, what time steps do you want simulation output for? EX: each day for 150 days
+
 time.out. <- seq(0,150,by = 1)
+
 #When do you want to sample each population during the epidemic? EX: One per week for 133 days
+
 time.samp. <- seq(0,133, by = 7)
+
 #How many individuals will you sample in each population during each sampling event?
+
 #Must be the same number of individuals in each population each time, but it can change across sampling events
+
 samp.sizes. <- rep(100, length(time.samp.))
+
 #Where should the CSV output file for each K be saved?
+
 outputlocation.<-getwd()
 
 ## Run the tool
