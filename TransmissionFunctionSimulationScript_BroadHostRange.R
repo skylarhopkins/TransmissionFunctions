@@ -54,12 +54,6 @@ NL.optim <- function(beta,
   outNL<-optim(startpar, nll.NL.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
   #print(outNL)
 }
-ks.<-0.1
-truebeta.<-FOI.*(Nref.)/(Nref.^ks.) #use known FOI to define truebeta for simulation and random parameter picking
-data<-as.data.frame(just.sim(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks=ks., initial.I=initial.I., initial.S=initial.S., time.out=time.out., time.samp=time.samp., samp.sizes=samp.sizes., nrestarts=nrestarts., ndatasets=ndatasets.))
-data.<-data
-outNL<-NL.optim(beta=truebeta., gamma = truegamma., datasets = data., initial.inf = initial.I., initial.sus = initial.S., samp.sizes = samp.sizes., pops = pops., time.outs = time.out., time.samps = time.samp.)
-exp(as.numeric(outNL$par))
 
 ##############################################################################
 ##########DD Neg Log Likelihood and optimization functions#######################
@@ -98,9 +92,6 @@ DD.optim <- function(FoI,
   #print(outNL)
 }
 
-data.<-as.data.frame(matrix(seq(1,20), nrow = 20, ncol=6))
-outDD<-DD.optim(FoI = FOI., N = Nref., gamma = truegamma., datasets = data., initial.inf = initial.I., initial.sus = initial.S., samp.sizes = samp.sizes., pops = pops., time.outs = time.out., time.samps = time.samp.)
-
 #################################################################################
 ##########FD Neg Log Likelihood and optimization functions#######################
 ################################################################################
@@ -135,44 +126,11 @@ FD.optim <- function(gamma,
   outFD<-optim(startpar, nll.FD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
   #print(outNL)
 }
-data.<-as.data.frame(matrix(seq(1,20), nrow = 20, ncol=6))
-outFD<-FD.optim(gamma = truegamma., datasets = data., initial.inf = initial.I., initial.sus = initial.S., samp.sizes = samp.sizes., pops = pops., time.outs = time.out., time.samps = time.samp.)
 
 ###############################################################################
 ###############Simulation and Optimization Function############################
 ###############################################################################
 
-just.sim<-function(FOI, truegamma, pops, Nref, ks, initial.I, initial.S, time.out, time.samp, samp.sizes, nrestarts, ndatasets) {
-  for (k in 1:length(ks)) {
-    ##set up dataframe for output of the fitting process - one per K value
-    factors<-expand.grid(fittingattempt=seq(1, nrestarts,1), dataset=seq(1, ndatasets, 1), K=ks[k])
-    L<-length(factors$K)
-    compareests<-cbind(factors, data.frame(betaNL=rep(NA,L),gammaNL=rep(NA,L), KNL=rep(NA,L), betaDD=rep(NA,L), gammaDD=rep(NA,L), betaFD=rep(NA,L), gammaFD=rep(NA,L), lik=rep(NA,L), conv=rep(NA,L), likDD=rep(NA,L), convDD=rep(NA,L), likFD=rep(NA,L), convFD=rep(NA,L), truebeta=rep(NA, L)))
-    #create each simulated dataset and try to fit to it nrestart times
-    for (j in 1:ndatasets) {
-      truebeta<-FOI*(Nref)/(Nref^ks[k]) #use known FOI to define truebeta for simulation and random parameter picking
-      #loop to get each sample dataset as a column in a dataframe
-      data<-data.frame(matrix(vector(), nrow=length(time.samp), ncol=length(pops))) #empty dataframe for data
-      for(e in 1:length(pops)) {
-        ts.sir <- data.frame(ode(
-          y = c(S=initial.S[e], I=initial.I[e]),               # Initial conditions for population
-          times = time.out,             # Timepoints for evaluation
-          func = sir,                   # Function to evaluate
-          parms = c(beta=truebeta, gamma=truegamma, N=pops[e], K=ks[k]),
-          method="lsoda"))               # Vector of parameters
-        ts.sir$P <- ts.sir$I / pops[e]
-        prev.samp <- ts.sir$P[ts.sir$time %in% time.samp]
-        data[,e] <- rbinom(length(time.samp), size = samp.sizes, prob = prev.samp)
-      }
-      #print(data)
-    }
-  }
-  data
-}
-
-just.sim(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks=ks., initial.I=initial.I., initial.S=initial.S., time.out=time.out., time.samp=time.samp., samp.sizes=samp.sizes., nrestarts=nrestarts., ndatasets=ndatasets.)
-
-outputlocation.="~/Documents/Transmission Function Literature Review"
 sim.and.opt<-function(FOI, truegamma, pops, Nref, ks, initial.I, initial.S, time.out, time.samp, samp.sizes, nrestarts, ndatasets, outputlocation) {
   for (k in 1:length(ks)) {
     ##set up dataframe for output of the fitting process - one per K value
