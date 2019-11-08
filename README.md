@@ -9,8 +9,10 @@ The subdirectory, contactr, contains a package with five functions that accompli
 install.packages("devtools")
 library("devtools")
 
-devtools::install_github("skylarhopkins/TransmissionFunctions", subdir="contactr") #does it work? I hope so.
+devtools::install_github("skylarhopkins/TransmissionFunctions", subdir="contactr") 
 library("contactr")
+
+## Assign globals (or put them in as function arguments below)
 
 #If you assign these outside of the function arguments, you cannot use the same names as the
 #argument names, or else you'll get a recursive argument error. Sticking a period after each
