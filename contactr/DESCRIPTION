@@ -1,0 +1,14 @@
+Package: contactr
+Title: Contact and Transmission Functions in Epidemiological Models
+Version: 0.1.0
+Authors@R: 
+    person(given = "Skylar",
+           family = "Hopkins",
+           role = c("aut", "cre"),
+           email = "skylar.hopkins@vt.edu")
+Description: Simulate epidemics with density-dependent, frequency-dependent, and/or nonlinear transmission functions and evaluate the bias in parameter estimates when assuming the incorrect form of the transmission function.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports: deSolve, stats, utils
+RoxygenNote: 6.1.1
