@@ -54,7 +54,8 @@
 #'#nrestarts=nrestarts., ndatasets=ndatasets., outputlocation=outputlocation.)
 #'#end_time <- Sys.time()
 #'#end_time - start_time
-
+#'
+#' @export
 sim.and.opt<-function(FOI, truegamma, pops, Nref, ks, initial.I, initial.S, time.out, time.samp, samp.sizes, nrestarts, ndatasets, outputlocation) {
   for (k in 1:length(ks)) {
     ##set up dataframe for output of the fitting process - one per K value

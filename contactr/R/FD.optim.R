@@ -14,7 +14,8 @@
 #'@param pops vector of total population sizes in each population, which should be initial.S + initial.I
 #'@param time.outs a single value indicating how many time units (e.g., 21 days days) the ODE should be simulated for - should be as long as largest time.samp
 #'@param time.samps vector of the times when the populations were sampled, such as 0, 7, 14, and 21 days
-
+#'
+#' @export
 FD.optim <- function(gamma,
                      datasets,
                      initial.inf,
