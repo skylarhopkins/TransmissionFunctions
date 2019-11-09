@@ -24,7 +24,7 @@
 #'@param samp.sizes vector of how many individuals will you sample in each population during each sampling event; same length as time.samp
 #'@param nrestarts number of fits of each model to each dataset with different random starting parameters
 #'@param ndatasets number of sample datasets for each value of K that you're simulating over
-#'@param outputlocation The root file directory where the output files should be stored
+#'@param outputlocation The root directory where the output files should be stored
 #'
 #'@examples
 #'###Set Global Variables

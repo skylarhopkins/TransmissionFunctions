@@ -32,7 +32,7 @@ sim.and.opt(FOI, truegamma, pops, Nref, ks, initial.I, initial.S, time.out,
 
 \item{ndatasets}{number of sample datasets for each value of K that you're simulating over}
 
-\item{outputlocation}{The root file directory where the output files should be stored}
+\item{outputlocation}{The root directory where the output files should be stored}
 }
 \description{
 'sim.and.opt' simulates epidemics in populations with different sizes (and thus densities, assuming constant area) using SIR
