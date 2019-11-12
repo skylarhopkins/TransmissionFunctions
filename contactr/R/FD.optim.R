@@ -45,5 +45,4 @@ FD.optim <- function(gamma,
   }
   startpar=c(beta=stats::runif(1, -2, 0), gamma = log(stats::rlnorm(1, mean=log(gamma), sdlog=1)))
   outFD<-stats::optim(startpar, nll.FD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
-  #print(outNL)
 }

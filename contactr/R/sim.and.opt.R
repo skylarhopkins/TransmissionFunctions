@@ -25,38 +25,40 @@
 #'@param nrestarts number of fits of each model to each dataset with different random starting parameters
 #'@param ndatasets number of sample datasets for each value of K that you're simulating over
 #'@param outputlocation The root directory where the output files should be stored
+#'@param printyn Logical statement indicating whether you want to print iteration numbers to the console
 #'
 #'@examples
-#'###Set Global Variables
-#'##If you assign these variables outside of the function arguments, you cannot use the
-#'##same names as the argument names, or else you'll get a recursive argument error.
-#'##Sticking a period after each name solves this problem
-#'#FOI.<-0.0001
-#'#truegamma.<-0.1
-#'#pops.<-c(100, 200, 500, 1000, 1500, 2000)
-#'#Nref.<-1000
-#'#ks.<-seq(0.0, 1.0, 0.1)
-#'#initial.I.<-c(1,2,5,10,15,20)
-#'#initial.S.<-pops.-initial.I.
-#'#time.out. <- seq(0,150,by = 1)
-#'#time.samp. <- seq(0,133, by = 7)
-#'#samp.sizes. <- rep(100, length(time.samp.))
-#'#nrestarts. = 1
-#'#ndatasets. = 1
-#'#outputlocation.<-getwd()
-#'###Run the tool
-#'##WARNING: this can take a very long time to run depending on ndatasets, nrestarts,
-#'##and length of ks,so you might want to estimate run times (end_time - start_time)
-#'##on a smaller subset first
-#'#start_time <- Sys.time()
-#'#sim.and.opt(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks=ks., initial.I=initial.I.,
-#'#initial.S=initial.S., time.out=time.out., time.samp=time.samp., samp.sizes=samp.sizes.,
-#'#nrestarts=nrestarts., ndatasets=ndatasets., outputlocation=outputlocation.)
-#'#end_time <- Sys.time()
-#'#end_time - start_time
-#'
+#'\donttest{
+#'#Set Global Variables
+#'#If you assign these variables outside of the function arguments, you cannot use the
+#'#same names as the argument names, or else you'll get a recursive argument error.
+#'#Sticking a period after each name solves this problem
+#'FOI.<-0.0001
+#'truegamma.<-0.1
+#'pops.<-c(100, 200, 500, 1000, 1500, 2000)
+#'Nref.<-1000
+#'ks.<-seq(0.0, 1.0, 0.1)
+#'initial.I.<-c(1,2,5,10,15,20)
+#'initial.S.<-pops.-initial.I.
+#'time.out. <- seq(0,150,by = 1)
+#'time.samp. <- seq(0,133, by = 7)
+#'samp.sizes. <- rep(100, length(time.samp.))
+#'nrestarts. = 1
+#'ndatasets. = 1
+#'outputlocation.<-getwd()
+#'#Run the tool
+#'#WARNING: this can take a very long time to run depending on ndatasets, nrestarts,
+#'#and length of ks,so you might want to estimate run times (end_time - start_time)
+#'#on a smaller subset first
+#'start_time <- Sys.time()
+#'sim.and.opt(FOI=FOI., truegamma=truegamma., pops=pops., Nref=Nref., ks=ks., initial.I=initial.I.,
+#'initial.S=initial.S., time.out=time.out., time.samp=time.samp., samp.sizes=samp.sizes.,
+#'nrestarts=nrestarts., ndatasets=ndatasets., outputlocation=outputlocation., printyn=TRUE)
+#'end_time <- Sys.time()
+#'end_time - start_time
+#'}
 #' @export
-sim.and.opt<-function(FOI, truegamma, pops, Nref, ks, initial.I, initial.S, time.out, time.samp, samp.sizes, nrestarts, ndatasets, outputlocation) {
+sim.and.opt<-function(FOI, truegamma, pops, Nref, ks, initial.I, initial.S, time.out, time.samp, samp.sizes, nrestarts, ndatasets, outputlocation, printyn) {
   for (k in 1:length(ks)) {
     ##set up dataframe for output of the fitting process - one per K value
     factors<-expand.grid(fittingattempt=seq(1, nrestarts,1), dataset=seq(1, ndatasets, 1), K=ks[k])
@@ -79,7 +81,7 @@ sim.and.opt<-function(FOI, truegamma, pops, Nref, ks, initial.I, initial.S, time
         data[,e] <- stats::rbinom(length(time.samp), size = samp.sizes, prob = prev.samp)
       }
       for (i in 1:nrestarts) {
-        print(c("NEW PARAMS", "K=", ks[k], "Dataset #", j, "Restart #", i)) #print to see loop progress
+        if(printyn==TRUE){print(c("NEW PARAMS", "K=", ks[k], "Dataset #", j, "Restart #", i))} #print to see loop progress
         ##optimization procedures - set random restarts and re-try once if they immediately produce errors
         tryNL <- try(outNL<-NL.optim(beta = truebeta, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp))
         if (class(tryNL) == "try-error") {

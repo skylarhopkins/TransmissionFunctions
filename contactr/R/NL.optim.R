@@ -47,5 +47,4 @@ NL.optim <- function(beta,
   }
   startpar = c(beta = log(stats::rlnorm(1, mean=log(beta), sdlog=1)), gamma = log(stats::rlnorm(1, mean=log(gamma), sdlog=1)), K=log(stats::rlnorm(1, mean=log(0.1), sdlog=1)))
   outNL<-stats::optim(startpar, nll.NL.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
-  #print(outNL)
 }
