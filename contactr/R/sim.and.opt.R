@@ -33,19 +33,19 @@
 #'#If you assign these variables outside of the function arguments, you cannot use the
 #'#same names as the argument names, or else you'll get a recursive argument error.
 #'#Sticking a period after each name solves this problem
-#'FOI.<-0.0001
-#'truegamma.<-0.1
-#'pops.<-c(100, 200, 500, 1000, 1500, 2000)
-#'Nref.<-1000
-#'ks.<-seq(0.0, 1.0, 0.1)
-#'initial.I.<-c(1,2,5,10,15,20)
-#'initial.S.<-pops.-initial.I.
+#'FOI. <- 0.0001
+#'truegamma. <- 0.1
+#'pops. <- c(100, 200, 500, 1000, 1500, 2000)
+#'Nref. <- 1000
+#'ks. <- seq(0.0, 1.0, 0.1)
+#'initial.I. <- c(1,2,5,10,15,20)
+#'initial.S. <- pops.-initial.I.
 #'time.out. <- seq(0,150,by = 1)
 #'time.samp. <- seq(0,133, by = 7)
 #'samp.sizes. <- rep(100, length(time.samp.))
-#'nrestarts. = 1
-#'ndatasets. = 1
-#'outputlocation.<-getwd()
+#'nrestarts. <- 1
+#'ndatasets. <- 1
+#'outputlocation. <- getwd()
 #'#Run the tool
 #'#WARNING: this can take a very long time to run depending on ndatasets, nrestarts,
 #'#and length of ks,so you might want to estimate run times (end_time - start_time)
@@ -58,17 +58,17 @@
 #'end_time - start_time
 #'}
 #' @export
-sim.and.opt<-function(FOI, truegamma, pops, Nref, ks, initial.I, initial.S, time.out, time.samp, samp.sizes, nrestarts, ndatasets, outputlocation, printyn) {
+sim.and.opt <- function(FOI, truegamma, pops, Nref, ks, initial.I, initial.S, time.out, time.samp, samp.sizes, nrestarts, ndatasets, outputlocation, printyn) {
   for (k in 1:length(ks)) {
     ##set up dataframe for output of the fitting process - one per K value
-    factors<-expand.grid(fittingattempt=seq(1, nrestarts,1), dataset=seq(1, ndatasets, 1), K=ks[k])
-    L<-length(factors$K)
-    compareests<-cbind(factors, data.frame(betaNL=rep(NA,L),gammaNL=rep(NA,L), KNL=rep(NA,L), betaDD=rep(NA,L), gammaDD=rep(NA,L), betaFD=rep(NA,L), gammaFD=rep(NA,L), lik=rep(NA,L), conv=rep(NA,L), likDD=rep(NA,L), convDD=rep(NA,L), likFD=rep(NA,L), convFD=rep(NA,L), truebeta=rep(NA, L)))
+    factors <- expand.grid(fittingattempt=seq(1, nrestarts,1), dataset=seq(1, ndatasets, 1), K=ks[k])
+    L <- length(factors$K)
+    compareests <- cbind(factors, data.frame(betaNL=rep(NA,L),gammaNL=rep(NA,L), KNL=rep(NA,L), betaDD=rep(NA,L), gammaDD=rep(NA,L), betaFD=rep(NA,L), gammaFD=rep(NA,L), lik=rep(NA,L), conv=rep(NA,L), likDD=rep(NA,L), convDD=rep(NA,L), likFD=rep(NA,L), convFD=rep(NA,L), truebeta=rep(NA, L)))
     #create each simulated dataset and try to fit to it nrestart times
     for (j in 1:ndatasets) {
-      truebeta<-FOI*(Nref)/(Nref^ks[k]) #use known FOI to define truebeta for simulation and random parameter picking
+      truebeta <- FOI*(Nref)/(Nref^ks[k]) #use known FOI to define truebeta for simulation and random parameter picking
       #loop to get each sample dataset as a column in a dataframe
-      data<-data.frame(matrix(vector(), nrow=length(time.samp), ncol=length(pops))) #empty dataframe for data
+      data <- data.frame(matrix(vector(), nrow=length(time.samp), ncol=length(pops))) #empty dataframe for data
       for(e in 1:length(pops)) {
         ts.sir <- data.frame(deSolve::ode(
           y = c(S=initial.S[e], I=initial.I[e]),               # Initial conditions for population
@@ -83,28 +83,28 @@ sim.and.opt<-function(FOI, truegamma, pops, Nref, ks, initial.I, initial.S, time
       for (i in 1:nrestarts) {
         if(printyn==TRUE){print(c("NEW PARAMS", "K=", ks[k], "Dataset #", j, "Restart #", i))} #print to see loop progress
         ##optimization procedures - set random restarts and re-try once if they immediately produce errors
-        tryNL <- try(outNL<-NL.optim(beta = truebeta, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp))
+        tryNL <- try(outNL <- NL.optim(beta = truebeta, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp))
         if (class(tryNL) == "try-error") {
-          outNL<-NL.optim(beta = truebeta, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp)
+          outNL <- NL.optim(beta = truebeta, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp)
         }
-        tryDD <- try(outDD<-DD.optim(FoI = FOI, N=Nref, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp))
+        tryDD <- try(outDD <- DD.optim(FoI = FOI, N=Nref, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp))
         if (class(tryDD) == "try-error") {
-          outDD<-DD.optim(FoI = FOI, N=Nref, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp)
+          outDD <- DD.optim(FoI = FOI, N=Nref, gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp)
         }
-        tryFD <- try(outFD<-FD.optim(gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp))
+        tryFD <- try(outFD <- FD.optim(gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp))
         if (class(tryFD) == "try-error") {
-          outFD<-FD.optim(gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp)
+          outFD <- FD.optim(gamma=truebeta, datasets = data, initial.inf = initial.I, initial.sus = initial.S, time.outs = time.out, samp.sizes = samp.sizes, pops = pops, time.samps = time.samp)
         }
         ##save output
-        AssignmentRows<-which(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)
-        compareests[AssignmentRows, c(4:10)]<-exp(c(as.numeric(outNL$par), as.numeric(outDD$par), as.numeric(outFD$par)))
-        compareests$lik[AssignmentRows]<-outNL$value  #negative log likelihood value
-        compareests$conv[AssignmentRows]<-outNL$convergence  #if not 0, didn't converge
-        compareests$likDD[AssignmentRows]<-outDD$value  #negative log likelihood value
-        compareests$convDD[AssignmentRows]<-outDD$convergence  #if not 0, didn't converge
-        compareests$likFD[AssignmentRows]<-outFD$value  #negative log likelihood value
-        compareests$convFD[AssignmentRows]<-outFD$convergence  #if not 0, didn't converge
-        compareests$truebeta[AssignmentRows]<-truebeta
+        AssignmentRows <- which(compareests$K==ks[k] & compareests$fittingattempt==i & compareests$dataset==j)
+        compareests[AssignmentRows, c(4:10)] <- exp(c(as.numeric(outNL$par), as.numeric(outDD$par), as.numeric(outFD$par)))
+        compareests$lik[AssignmentRows] <- outNL$value  #negative log likelihood value
+        compareests$conv[AssignmentRows] <- outNL$convergence  #if not 0, didn't converge
+        compareests$likDD[AssignmentRows] <- outDD$value  #negative log likelihood value
+        compareests$convDD[AssignmentRows] <- outDD$convergence  #if not 0, didn't converge
+        compareests$likFD[AssignmentRows] <- outFD$value  #negative log likelihood value
+        compareests$convFD[AssignmentRows] <- outFD$convergence  #if not 0, didn't converge
+        compareests$truebeta[AssignmentRows] <- truebeta
       }
     }
     #output one dataframe per K value to a CSV to save

@@ -56,19 +56,19 @@ values of K.
 #If you assign these variables outside of the function arguments, you cannot use the
 #same names as the argument names, or else you'll get a recursive argument error.
 #Sticking a period after each name solves this problem
-FOI.<-0.0001
-truegamma.<-0.1
-pops.<-c(100, 200, 500, 1000, 1500, 2000)
-Nref.<-1000
-ks.<-seq(0.0, 1.0, 0.1)
-initial.I.<-c(1,2,5,10,15,20)
-initial.S.<-pops.-initial.I.
+FOI. <- 0.0001
+truegamma. <- 0.1
+pops. <- c(100, 200, 500, 1000, 1500, 2000)
+Nref. <- 1000
+ks. <- seq(0.0, 1.0, 0.1)
+initial.I. <- c(1,2,5,10,15,20)
+initial.S. <- pops.-initial.I.
 time.out. <- seq(0,150,by = 1)
 time.samp. <- seq(0,133, by = 7)
 samp.sizes. <- rep(100, length(time.samp.))
-nrestarts. = 1
-ndatasets. = 1
-outputlocation.<-getwd()
+nrestarts. <- 1
+ndatasets. <- 1
+outputlocation. <- getwd()
 #Run the tool
 #WARNING: this can take a very long time to run depending on ndatasets, nrestarts,
 #and length of ks,so you might want to estimate run times (end_time - start_time)

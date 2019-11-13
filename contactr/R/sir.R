@@ -18,8 +18,8 @@
 #'@examples
 #'initial.S <- 99
 #'initial.I <- 1
-#'y<-c(S = initial.S, I = initial.I)
-#'parameters<-c(beta=0.0005, gamma=0.05, K=1, N=100)
+#'y <- c(S = initial.S, I = initial.I)
+#'parameters <- c(beta=0.0005, gamma=0.05, K=1, N=100)
 #'sir(t=1, y=y, parms=parameters)
 #'
 #' @export

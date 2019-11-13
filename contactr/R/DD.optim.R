@@ -31,7 +31,7 @@ DD.optim <- function(FoI,
   nll.DD.fn <- function(pars) # log(B) & log(gamma) in a vector, must be named
   {
     pars <- c(exp(pars[1]), exp(pars[2]), K=1) #K=1 for DD
-    nlls<-rep(NA, length(pops))
+    nlls <- rep(NA, length(pops))
     for(i in 1:length(pops)) {
       #Create epidemic time series from the parameters
       ts.sir.temp <- data.frame(deSolve::ode(y = c(S=initial.sus[i], I=initial.inf[i]), times = time.outs,
@@ -41,11 +41,11 @@ DD.optim <- function(FoI,
       prev.samp.temp <- ts.sir.temp$P[ts.sir.temp$time %in% time.samps]
       prev.samp.temp <- pmin(pmax(prev.samp.temp, 0.0001), 0.9999)
       #calculate the negative log likelihood for these params in this population
-      nlls[i]<- -sum(stats::dbinom(datasets[,i], samp.sizes, prev.samp.temp, log = TRUE))
+      nlls[i] <- -sum(stats::dbinom(datasets[,i], samp.sizes, prev.samp.temp, log = TRUE))
     }
-    nll<-sum(nlls)
+    nll <- sum(nlls)
     nll
   }
-  startpar= c(beta = log(stats::rlnorm(1, mean=log((FoI*N)/(N^1)), sdlog=1)), gamma = log(stats::rlnorm(1, mean=log(gamma), sdlog=1)))
-  outDD<-stats::optim(startpar, nll.DD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
+  startpar <- c(beta = log(stats::rlnorm(1, mean=log((FoI*N)/(N^1)), sdlog=1)), gamma = log(stats::rlnorm(1, mean=log(gamma), sdlog=1)))
+  outDD <- stats::optim(startpar, nll.DD.fn, control = list(trace = 0, maxit = 1000), method = "Nelder-Mead")
 }
