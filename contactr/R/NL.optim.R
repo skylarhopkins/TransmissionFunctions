@@ -27,7 +27,7 @@ NL.optim <- function(beta,
                      time.outs,
                      time.samps) # the times they were observed at
 {
-  nll.NL.fn <- function(pars) # log(B) & log(gamma) in a vector, must be named
+  nll.NL.fn <- function(pars) # log(B), log(gamma), and log(K) in a vector, must be named
   {
     pars <- c(exp(pars[1]), exp(pars[2]), exp(pars[3]))
     nlls <- rep(NA, length(pops))

@@ -4,8 +4,17 @@
 \alias{NL.optim}
 \title{Minimize the negative log likelihood to find the best-fitting nonlinear transmission function}
 \usage{
-NL.optim(beta, gamma, datasets, initial.inf, initial.sus, samp.sizes, pops,
-  time.outs, time.samps)
+NL.optim(
+  beta,
+  gamma,
+  datasets,
+  initial.inf,
+  initial.sus,
+  samp.sizes,
+  pops,
+  time.outs,
+  time.samps
+)
 }
 \arguments{
 \item{beta}{The true value of Beta, which is used as a mean for picking random starting values}

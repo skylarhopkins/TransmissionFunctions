@@ -4,8 +4,18 @@
 \alias{DD.optim}
 \title{Minimize the negative log likelihood to find the best-fitting density-dependent transmission function}
 \usage{
-DD.optim(FoI, N, gamma, datasets, initial.inf, initial.sus, samp.sizes,
-  pops, time.outs, time.samps)
+DD.optim(
+  FoI,
+  N,
+  gamma,
+  datasets,
+  initial.inf,
+  initial.sus,
+  samp.sizes,
+  pops,
+  time.outs,
+  time.samps
+)
 }
 \arguments{
 \item{FoI}{The true force of infection, which is used with nref to find a truebeta as a mean for picking random starting values}

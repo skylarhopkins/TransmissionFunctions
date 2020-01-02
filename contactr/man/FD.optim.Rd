@@ -4,8 +4,16 @@
 \alias{FD.optim}
 \title{Minimize the negative log likelihood to find the best-fitting frequency-dependent transmission function}
 \usage{
-FD.optim(gamma, datasets, initial.inf, initial.sus, samp.sizes, pops,
-  time.outs, time.samps)
+FD.optim(
+  gamma,
+  datasets,
+  initial.inf,
+  initial.sus,
+  samp.sizes,
+  pops,
+  time.outs,
+  time.samps
+)
 }
 \arguments{
 \item{gamma}{The true value of gamma, which is used as a mean for picking random starting values}
